@@ -341,7 +341,7 @@ export class App implements OnInit {
   }
 
   protected async openApp(app: CompanyApp, event: Event): Promise<void> {
-    if (!this.isMontaoGpsApp(app) && !this.isMontaoRentApp(app)) {
+    if (!this.isSsoApp(app)) {
       return;
     }
 
@@ -352,7 +352,7 @@ export class App implements OnInit {
 
     try {
       const token = this.authToken();
-      const ssoPath = this.isMontaoRentApp(app) ? 'montao-rent' : 'montao-gps';
+      const ssoPath = this.ssoPathForApp(app);
       const response = await fetch(`${this.apiUrl}/sso/${ssoPath}`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -370,6 +370,22 @@ export class App implements OnInit {
     } finally {
       this.ssoLoadingApp.set('');
     }
+  }
+
+  private isSsoApp(app: CompanyApp): boolean {
+    return this.isMontaoGpsApp(app) || this.isMontaoRentApp(app) || this.isMontaoCrmApp(app);
+  }
+
+  private ssoPathForApp(app: CompanyApp): string {
+    if (this.isMontaoRentApp(app)) {
+      return 'montao-rent';
+    }
+
+    if (this.isMontaoCrmApp(app)) {
+      return 'montao-crm';
+    }
+
+    return 'montao-gps';
   }
 
   private setSession(payload: LoginResponse): void {
