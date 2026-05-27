@@ -375,7 +375,9 @@ p {
 }
 
 .network-lines line.gps-verified,
-.network-lines line.rent-verified {
+.network-lines line.rent-verified,
+.network-lines line.crm-verified,
+.network-lines line.gps-rent-verified {
   stroke: rgba(34, 197, 94, 0.9);
   stroke-width: 0.36;
   filter: drop-shadow(0 0 7px rgba(34, 197, 94, 0.78));
@@ -453,6 +455,31 @@ p {
   border-color: rgba(245, 59, 63, 0.9);
   background: #363636;
   transform: translate(-50%, -50%) scale(1.03);
+}
+
+.network-node.node-disconnected {
+  border-color: rgba(160, 160, 160, 0.34);
+  background: rgba(42, 42, 42, 0.86);
+  color: rgba(235, 235, 235, 0.72);
+}
+
+.network-node.node-disconnected .node-icon {
+  background: #4b4b4b;
+  box-shadow: 0 0 0 7px rgba(160, 160, 160, 0.1);
+  filter: grayscale(1) saturate(0) contrast(0.92);
+}
+
+.network-node.node-disconnected .node-icon img {
+  filter: grayscale(1) saturate(0) contrast(0.95);
+  opacity: 0.78;
+}
+
+.network-node.node-disconnected .node-copy small {
+  color: rgba(190, 190, 190, 0.62);
+}
+
+.network-node.node-connected {
+  border-color: rgba(34, 197, 94, 0.52);
 }
 
 .network-node[data-node="0"] {

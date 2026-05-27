@@ -29,6 +29,8 @@ interface AppNodeLink {
   y2: number;
   isMontaoGpsConnection: boolean;
   isMontaoRentConnection: boolean;
+  isMontaoCrmConnection: boolean;
+  isMontaoGpsRentConnection: boolean;
 }
 
 interface AuthUser {
@@ -85,6 +87,7 @@ export class App implements OnInit {
   protected readonly ssoLoadingApp = signal('');
   protected readonly montaoGpsUserExists = signal(false);
   protected readonly montaoRentUserExists = signal(false);
+  protected readonly montaoCrmUserExists = signal(false);
   private readonly nodePositions = [
     { x: 50, y: 16 },
     { x: 78, y: 33 },
@@ -131,6 +134,8 @@ export class App implements OnInit {
         y2: node.y,
         isMontaoGpsConnection: this.isMontaoGpsApp(node),
         isMontaoRentConnection: this.isMontaoRentApp(node),
+        isMontaoCrmConnection: this.isMontaoCrmApp(node),
+        isMontaoGpsRentConnection: false,
       });
     }
 
@@ -143,6 +148,14 @@ export class App implements OnInit {
 
     if (crmNode && billingNode) {
       links.push(this.createNodeLink(billingNode, crmNode, 'facturacion-crm'));
+    }
+
+    const gpsNode = nodes.find((node) => this.isMontaoGpsApp(node));
+    const rentNode = nodes.find((node) => this.isMontaoRentApp(node));
+    const hasGpsRentLink = links.some((link) => link.isMontaoGpsRentConnection);
+
+    if (gpsNode && rentNode && !hasGpsRentLink) {
+      links.push(this.createNodeLink(gpsNode, rentNode, 'montao-gps-rent'));
     }
 
     return links;
@@ -256,6 +269,7 @@ export class App implements OnInit {
     this.apps.set([]);
     this.montaoGpsUserExists.set(false);
     this.montaoRentUserExists.set(false);
+    this.montaoCrmUserExists.set(false);
     this.password.set('');
   }
 
@@ -265,6 +279,35 @@ export class App implements OnInit {
 
   protected isMontaoRentApp(app: CompanyApp): boolean {
     return app.name.toLowerCase().includes('rent');
+  }
+
+  protected isMontaoCrmApp(app: CompanyApp): boolean {
+    return app.name.toLowerCase().includes('crm');
+  }
+
+  protected isVerifiedLink(link: AppNodeLink): boolean {
+    return (
+      (link.isMontaoGpsConnection && this.montaoGpsUserExists()) ||
+      (link.isMontaoRentConnection && this.montaoRentUserExists()) ||
+      (link.isMontaoCrmConnection && this.montaoCrmUserExists()) ||
+      (link.isMontaoGpsRentConnection && this.montaoGpsUserExists() && this.montaoRentUserExists())
+    );
+  }
+
+  protected isConnectedApp(app: CompanyApp): boolean {
+    if (this.isMontaoGpsApp(app)) {
+      return this.montaoGpsUserExists();
+    }
+
+    if (this.isMontaoRentApp(app)) {
+      return this.montaoRentUserExists();
+    }
+
+    if (this.isMontaoCrmApp(app)) {
+      return this.montaoCrmUserExists();
+    }
+
+    return false;
   }
 
   protected displayAppName(app: CompanyApp): string {
@@ -380,13 +423,23 @@ export class App implements OnInit {
       y2: to.y,
       isMontaoGpsConnection: false,
       isMontaoRentConnection: false,
+      isMontaoCrmConnection: false,
+      isMontaoGpsRentConnection: this.isGpsRentNodePair(from, to),
     };
+  }
+
+  private isGpsRentNodePair(from: AppNode, to: AppNode): boolean {
+    return (
+      (this.isMontaoGpsApp(from) && this.isMontaoRentApp(to)) ||
+      (this.isMontaoRentApp(from) && this.isMontaoGpsApp(to))
+    );
   }
 
   private async loadExternalUserStatuses(): Promise<void> {
     await Promise.all([
       this.loadMontaoGpsUserStatus(),
       this.loadMontaoRentUserStatus(),
+      this.loadMontaoCrmUserStatus(),
     ]);
   }
 
@@ -435,6 +488,30 @@ export class App implements OnInit {
       this.montaoRentUserExists.set(payload.exists === true);
     } catch {
       this.montaoRentUserExists.set(false);
+    }
+  }
+
+  private async loadMontaoCrmUserStatus(): Promise<void> {
+    const token = this.authToken();
+    if (!token) {
+      this.montaoCrmUserExists.set(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${this.apiUrl}/sso/montao-crm/user-exists`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        this.montaoCrmUserExists.set(false);
+        return;
+      }
+
+      const payload = (await response.json()) as { exists?: boolean };
+      this.montaoCrmUserExists.set(payload.exists === true);
+    } catch {
+      this.montaoCrmUserExists.set(false);
     }
   }
 }

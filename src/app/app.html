@@ -174,8 +174,10 @@
                 <line
                   [class.gps-verified]="link.isMontaoGpsConnection && montaoGpsUserExists()"
                   [class.rent-verified]="link.isMontaoRentConnection && montaoRentUserExists()"
-                  [style.stroke]="(link.isMontaoGpsConnection && montaoGpsUserExists()) || (link.isMontaoRentConnection && montaoRentUserExists()) ? 'rgba(34, 197, 94, 0.95)' : null"
-                  [style.stroke-width]="(link.isMontaoGpsConnection && montaoGpsUserExists()) || (link.isMontaoRentConnection && montaoRentUserExists()) ? 0.46 : null"
+                  [class.crm-verified]="link.isMontaoCrmConnection && montaoCrmUserExists()"
+                  [class.gps-rent-verified]="link.isMontaoGpsRentConnection && montaoGpsUserExists() && montaoRentUserExists()"
+                  [style.stroke]="isVerifiedLink(link) ? 'rgba(34, 197, 94, 0.95)' : null"
+                  [style.stroke-width]="isVerifiedLink(link) ? 0.46 : null"
                   [attr.x1]="link.x1"
                   [attr.y1]="link.y1"
                   [attr.x2]="link.x2"
@@ -187,6 +189,8 @@
             @for (app of appNodes(); track app.name) {
               <a
                 class="network-node"
+                [class.node-connected]="isConnectedApp(app)"
+                [class.node-disconnected]="!isConnectedApp(app)"
                 [attr.data-node]="app.index % 9"
                 [href]="app.url"
                 target="_blank"
