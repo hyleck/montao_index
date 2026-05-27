@@ -298,30 +298,32 @@ export class App implements OnInit {
   }
 
   protected async openApp(app: CompanyApp, event: Event): Promise<void> {
-    if (!this.isMontaoGpsApp(app)) {
+    if (!this.isMontaoGpsApp(app) && !this.isMontaoRentApp(app)) {
       return;
     }
 
     event.preventDefault();
     this.errorMessage.set('');
-    this.ssoLoadingApp.set(this.displayAppName(app));
+    const displayName = this.displayAppName(app);
+    this.ssoLoadingApp.set(displayName);
 
     try {
       const token = this.authToken();
-      const response = await fetch(`${this.apiUrl}/sso/montao-gps`, {
+      const ssoPath = this.isMontaoRentApp(app) ? 'montao-rent' : 'montao-gps';
+      const response = await fetch(`${this.apiUrl}/sso/${ssoPath}`, {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
       if (!response.ok) {
-        const payload = await response.json().catch(() => ({ message: 'No se pudo abrir Montao GPS' }));
-        throw new Error(payload.message || 'No se pudo abrir Montao GPS');
+        const payload = await response.json().catch(() => ({ message: `No se pudo abrir ${displayName}` }));
+        throw new Error(payload.message || `No se pudo abrir ${displayName}`);
       }
 
       const payload = (await response.json()) as { redirectUrl: string };
       window.open(payload.redirectUrl, '_blank', 'noopener');
     } catch (error) {
-      this.errorMessage.set(error instanceof Error ? error.message : 'No se pudo abrir Montao GPS');
+      this.errorMessage.set(error instanceof Error ? error.message : `No se pudo abrir ${displayName}`);
     } finally {
       this.ssoLoadingApp.set('');
     }
