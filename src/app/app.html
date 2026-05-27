@@ -2,7 +2,9 @@
   <main class="login-page">
     <section class="login-panel" aria-labelledby="login-title">
       <a class="brand login-brand" href="/" aria-label="Montao Index">
-        <span class="brand-mark">M</span>
+        <span class="brand-mark">
+          <img src="/logo.png" alt="" />
+        </span>
         <span>
           <strong>MONTAO</strong>
           <small>INDEX</small>
@@ -91,7 +93,9 @@
   <div class="app-shell">
     <aside class="sidebar" aria-label="Navegacion principal">
       <a class="brand" href="/" aria-label="Montao Index">
-        <span class="brand-mark">M</span>
+        <span class="brand-mark">
+          <img src="/logo.png" alt="" />
+        </span>
         <span>
           <strong>MONTAO</strong>
           <small>INDEX</small>
@@ -117,8 +121,14 @@
             rel="noopener"
             (click)="openApp(app, $event)"
           >
-            <span>{{ app.icon }}</span>
-            {{ app.name }}
+            <span>
+              @if (appLogoUrl(app)) {
+                <img [src]="appLogoUrl(app)" alt="" />
+              } @else {
+                {{ app.icon }}
+              }
+            </span>
+            {{ displayAppName(app) }}
           </a>
         }
       </nav>
@@ -151,40 +161,60 @@
           <p class="inline-error">{{ errorMessage() }}</p>
         }
 
-        @for (section of groupedApps(); track section.group) {
-          <section class="app-section" aria-label="Grupo de aplicaciones">
-            <div class="section-heading">
-              <h2>{{ section.group }}</h2>
+        @if (appNodes().length) {
+          <section class="network-dashboard" aria-label="Mapa de aplicaciones">
+            <div class="network-core" aria-hidden="true">
+              <span class="core-ring"></span>
+              <span class="core-pulse"></span>
+              <img src="/logo.png" alt="" />
             </div>
 
-            <div class="app-grid">
-              @for (app of section.apps; track app.name) {
-                <a
-                  class="app-card"
-                  [href]="app.url"
-                  target="_blank"
-                  rel="noopener"
-                  (click)="openApp(app, $event)"
-                >
-                  <span class="app-icon" aria-hidden="true">{{ app.icon }}</span>
-                  <span class="app-copy">
-                    <strong>{{ app.name }}</strong>
-                    <small>
-                      @if (ssoLoadingApp() === app.name) {
-                        Entrando con SSO...
-                      } @else {
-                        {{ app.description }}
-                      }
-                    </small>
-                  </span>
-                  <span class="status" [class.review]="app.status === 'Revision'">
-                    {{ app.status }}
-                  </span>
-                </a>
+            <svg class="network-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+              @for (link of appNodeLinks(); track link.id) {
+                <line
+                  [class.gps-verified]="link.isMontaoGpsConnection && montaoGpsUserExists()"
+                  [class.rent-verified]="link.isMontaoRentConnection && montaoRentUserExists()"
+                  [style.stroke]="(link.isMontaoGpsConnection && montaoGpsUserExists()) || (link.isMontaoRentConnection && montaoRentUserExists()) ? 'rgba(34, 197, 94, 0.95)' : null"
+                  [style.stroke-width]="(link.isMontaoGpsConnection && montaoGpsUserExists()) || (link.isMontaoRentConnection && montaoRentUserExists()) ? 0.46 : null"
+                  [attr.x1]="link.x1"
+                  [attr.y1]="link.y1"
+                  [attr.x2]="link.x2"
+                  [attr.y2]="link.y2"
+                />
               }
-            </div>
+            </svg>
+
+            @for (app of appNodes(); track app.name) {
+              <a
+                class="network-node"
+                [attr.data-node]="app.index % 9"
+                [href]="app.url"
+                target="_blank"
+                rel="noopener"
+                (click)="openApp(app, $event)"
+              >
+                <span class="node-orbit" aria-hidden="true"></span>
+                <span class="node-icon" aria-hidden="true">
+                  @if (appLogoUrl(app)) {
+                    <img [src]="appLogoUrl(app)" alt="" />
+                  } @else {
+                    {{ app.icon }}
+                  }
+                </span>
+                <span class="node-copy">
+                  <strong>{{ displayAppName(app) }}</strong>
+                  <small>
+                    @if (ssoLoadingApp() === displayAppName(app)) {
+                      Entrando con SSO...
+                    } @else {
+                      {{ app.description }}
+                    }
+                  </small>
+                </span>
+              </a>
+            }
           </section>
-        } @empty {
+        } @else {
           <section class="empty-state">
             <h2>Sin aplicaciones</h2>
             <p>No hay aplicaciones registradas.</p>
