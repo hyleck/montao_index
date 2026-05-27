@@ -237,7 +237,7 @@ app.post('/api/sso/montao-gps', authenticate, async (req, res) => {
   }
 
   const gpsApiUrl = process.env.MONTAO_GPS_API_URL || 'https://tracker-back.dorhu.com';
-  const gpsFrontendUrl = process.env.MONTAO_GPS_FRONTEND_URL || 'https://gps.montao.net';
+  const gpsFrontendUrl = process.env.MONTAO_GPS_FRONTEND_URL || 'https://tracker.montao.net';
   const ssoSecret =
     process.env.MONTAO_INDEX_SSO_SECRET ||
     process.env.MONTAO_GPS_SSO_SECRET ||
