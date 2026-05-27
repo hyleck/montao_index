@@ -266,9 +266,12 @@ app.post('/api/sso/montao-gps', authenticate, async (req, res) => {
   const payload = await response.json();
   const gpsUser = encodeURIComponent(JSON.stringify(payload.user || {}));
   const token = encodeURIComponent(payload.access_token);
+  const sessionDate = payload.session_date
+    ? `&session_date=${encodeURIComponent(payload.session_date)}`
+    : '';
 
   return res.json({
-    redirectUrl: `${gpsFrontendUrl}/auth/sso?token=${token}&user=${gpsUser}`,
+    redirectUrl: `${gpsFrontendUrl}/auth/sso?token=${token}&user=${gpsUser}${sessionDate}`,
   });
 });
 
