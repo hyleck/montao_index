@@ -1,10 +1,9 @@
 {
-  "name": "montao-index",
+  "name": "montao-index-frontend",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "start:backend": "node backend/server.js",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
@@ -30,12 +29,6 @@
     "@angular/forms": "^21.0.0",
     "@angular/platform-browser": "^21.0.0",
     "@angular/router": "^21.0.0",
-    "bcryptjs": "^3.0.3",
-    "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3",
-    "mongoose": "^9.6.2",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
