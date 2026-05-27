@@ -3,6 +3,8 @@ import { App } from './app';
 
 describe('App', () => {
   beforeEach(async () => {
+    localStorage.clear();
+
     await TestBed.configureTestingModule({
       imports: [App],
     }).compileComponents();
@@ -14,10 +16,13 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render title', async () => {
+  it('should render the login screen first', async () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, montao-index');
+    expect(compiled.textContent).toContain('Iniciar sesion');
+    expect(compiled.textContent).toContain('Registro');
+    expect(compiled.textContent).toContain('MONTAO');
+    expect(compiled.textContent).not.toContain('Productividad');
   });
 });
