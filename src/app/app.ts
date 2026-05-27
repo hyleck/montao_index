@@ -28,6 +28,24 @@ interface LoginResponse {
 
 type AuthMode = 'login' | 'register';
 
+declare global {
+  interface Window {
+    __MONTAO_INDEX_API_URL__?: string;
+  }
+}
+
+function getApiUrl(): string {
+  if (window.__MONTAO_INDEX_API_URL__) {
+    return window.__MONTAO_INDEX_API_URL__;
+  }
+
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:3000/api';
+  }
+
+  return 'https://index-backend.montao.net/api';
+}
+
 @Component({
   selector: 'app-root',
   imports: [FormsModule],
@@ -35,7 +53,7 @@ type AuthMode = 'login' | 'register';
   styleUrl: './app.scss',
 })
 export class App implements OnInit {
-  private readonly apiUrl = 'http://localhost:3000/api';
+  private readonly apiUrl = getApiUrl();
   private readonly tokenKey = 'montao_index_token';
   private readonly userKey = 'montao_index_user';
 
