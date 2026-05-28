@@ -90,7 +90,7 @@
     </section>
   </main>
 } @else {
-  <div class="app-shell">
+  <div class="app-shell" [class.light-mode]="themeMode() === 'light'">
     <aside class="sidebar" aria-label="Navegacion principal">
       <a class="brand" href="/" aria-label="Montao Index">
         <span class="brand-mark">
@@ -104,52 +104,34 @@
 
       <nav class="nav-block" aria-label="Favoritos">
         <p>Favoritos</p>
-        <a class="nav-item active" href="/">
-          <span>▦</span>
+        <button
+          class="nav-item"
+          type="button"
+          [class.active]="workspaceView() === 'dashboard'"
+          (click)="workspaceView.set('dashboard')"
+        >
+          <span><i class="pi pi-th-large" aria-hidden="true"></i></span>
           Dashboard
           <small>{{ apps().length }}</small>
-        </a>
-      </nav>
-
-      <nav class="nav-block main-menu" aria-label="Aplicaciones">
-        <p>Aplicaciones</p>
-        @for (app of apps(); track app.name) {
-          <a
-            class="nav-item"
-            [href]="app.url"
-            target="_blank"
-            rel="noopener"
-            (click)="openApp(app, $event)"
-          >
-            <span>
-              @if (appLogoUrl(app)) {
-                <img [src]="appLogoUrl(app)" alt="" />
-              } @else {
-                {{ app.icon }}
-              }
-            </span>
-            {{ displayAppName(app) }}
-          </a>
-        }
+        </button>
       </nav>
 
       <nav class="nav-block system-menu" aria-label="Sistema">
         <p>Sistema</p>
-        <a class="nav-item" href="/">
-          <span>⚙</span>
+        <button
+          class="nav-item"
+          type="button"
+          [class.active]="workspaceView() === 'settings'"
+          (click)="workspaceView.set('settings')"
+        >
+          <span><i class="pi pi-cog" aria-hidden="true"></i></span>
           Configuracion
-        </a>
+        </button>
       </nav>
     </aside>
 
     <div class="workspace">
       <header class="topbar">
-        <div class="quick-actions" aria-label="Accesos rapidos">
-          <a href="http://localhost:4200" target="_blank" rel="noopener">▦ CRM</a>
-          <a href="http://localhost:4300" target="_blank" rel="noopener">▣ Rent</a>
-          <a class="active" href="http://localhost:4201/">Soporte tecnico</a>
-        </div>
-
         <div class="user-actions" aria-label="Usuario">
           <span class="user-name">{{ user()?.name || user()?.email }}</span>
           <button type="button" aria-label="Cerrar sesion" (click)="logout()">Salir</button>
@@ -161,64 +143,229 @@
           <p class="inline-error">{{ errorMessage() }}</p>
         }
 
-        @if (appNodes().length) {
-          <section class="network-dashboard" aria-label="Mapa de aplicaciones">
-            <div class="network-core" aria-hidden="true">
-              <span class="core-ring"></span>
-              <span class="core-pulse"></span>
-              <img src="/logo.png" alt="" />
+        @if (workspaceView() === 'settings') {
+          <section class="settings-page" aria-label="Perfil y configuracion">
+            <header class="settings-header">
+              <nav class="breadcrumbs" aria-label="Ruta">
+                <span><i class="pi pi-home" aria-hidden="true"></i></span>
+                <span><i class="pi pi-angle-right" aria-hidden="true"></i></span>
+                <strong>Perfil</strong>
+              </nav>
+
+              <div class="profile-tabs" aria-label="Secciones de perfil">
+                <button class="active" type="button">Configuracion</button>
+              </div>
+            </header>
+
+            <div class="settings-grid">
+              <form class="settings-card profile-card" (ngSubmit)="saveProfile()">
+                <h3><span><i class="pi pi-user-edit" aria-hidden="true"></i></span> Mi usuario</h3>
+                <label class="settings-field stacked">
+                  <span>Nombre</span>
+                  <input
+                    name="profileName"
+                    type="text"
+                    autocomplete="name"
+                    placeholder="Tu nombre"
+                    [ngModel]="profileName()"
+                    (ngModelChange)="updateProfileName($event)"
+                    required
+                  />
+                </label>
+                <label class="settings-field stacked">
+                  <span>Correo</span>
+                  <input
+                    name="profileEmail"
+                    type="email"
+                    autocomplete="email"
+                    placeholder="correo@montao.com"
+                    [ngModel]="profileEmail()"
+                    (ngModelChange)="updateProfileEmail($event)"
+                    required
+                  />
+                </label>
+                <label class="settings-field stacked">
+                  <span>Nueva contraseña</span>
+                  <input
+                    name="profilePassword"
+                    type="password"
+                    autocomplete="new-password"
+                    placeholder="Dejala vacia para no cambiarla"
+                    [ngModel]="profilePassword()"
+                    (ngModelChange)="updateProfilePassword($event)"
+                  />
+                </label>
+                <label class="settings-field stacked">
+                  <span>Confirmar contraseña</span>
+                  <input
+                    name="profilePasswordConfirm"
+                    type="password"
+                    autocomplete="new-password"
+                    placeholder="Confirma la nueva contraseña"
+                    [ngModel]="profilePasswordConfirm()"
+                    (ngModelChange)="updateProfilePasswordConfirm($event)"
+                  />
+                </label>
+                @if (profileMessage()) {
+                  <p class="profile-message">{{ profileMessage() }}</p>
+                }
+                <button class="save-settings" type="submit" [disabled]="isSavingProfile()">
+                  {{ isSavingProfile() ? 'Guardando...' : 'Guardar usuario' }}
+                </button>
+              </form>
+
+              <section class="settings-card settings-card-tall">
+                <h3><span><i class="pi pi-palette" aria-hidden="true"></i></span> Tema de la Aplicacion</h3>
+                <label class="settings-field">
+                  <select
+                    aria-label="Tema"
+                    [ngModel]="themeMode()"
+                    (ngModelChange)="setThemeMode($event)"
+                  >
+                    <option value="dark">Oscuro</option>
+                    <option value="light">Claro</option>
+                  </select>
+                </label>
+
+                <div class="theme-options" aria-label="Opciones de tema">
+                  <button
+                    class="theme-preview light"
+                    type="button"
+                    [class.active]="themeMode() === 'light'"
+                    (click)="setThemeMode('light')"
+                  >
+                    <span></span>
+                    <strong>Claro</strong>
+                  </button>
+                  <button
+                    class="theme-preview dark"
+                    type="button"
+                    [class.active]="themeMode() === 'dark'"
+                    (click)="setThemeMode('dark')"
+                  >
+                    <span></span>
+                    <strong>Oscuro</strong>
+                  </button>
+                </div>
+
+                <p>Personaliza la apariencia de la aplicacion</p>
+              </section>
+            </div>
+          </section>
+        } @else if (appNodes().length) {
+          <section class="dashboard-view-shell" aria-label="Dashboard de sistemas">
+            <div class="view-switcher" aria-label="Tipo de visualizacion">
+              <button
+                type="button"
+                [class.active]="dashboardViewMode() === 'network'"
+                (click)="dashboardViewMode.set('network')">
+                Red
+              </button>
+              <button
+                type="button"
+                [class.active]="dashboardViewMode() === 'grid'"
+                (click)="dashboardViewMode.set('grid')">
+                Cuadricula
+              </button>
             </div>
 
-            <svg class="network-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-              @for (link of appNodeLinks(); track link.id) {
-                <line
-                  [class.gps-verified]="link.isMontaoGpsConnection && montaoGpsUserExists()"
-                  [class.rent-verified]="link.isMontaoRentConnection && montaoRentUserExists()"
-                  [class.crm-verified]="link.isMontaoCrmConnection && montaoCrmUserExists()"
-                  [class.gps-rent-verified]="link.isMontaoGpsRentConnection && montaoGpsUserExists() && montaoRentUserExists()"
-                  [class.crm-rent-verified]="link.isMontaoCrmRentConnection && montaoCrmUserExists() && montaoRentUserExists()"
-                  [style.stroke]="isVerifiedLink(link) ? 'rgba(34, 197, 94, 0.95)' : null"
-                  [style.stroke-width]="isVerifiedLink(link) ? 0.46 : null"
-                  [attr.x1]="link.x1"
-                  [attr.y1]="link.y1"
-                  [attr.x2]="link.x2"
-                  [attr.y2]="link.y2"
-                />
-              }
-            </svg>
+            @if (dashboardViewMode() === 'network') {
+              <section class="network-dashboard" aria-label="Mapa de aplicaciones">
+                <div class="network-core" aria-hidden="true">
+                  <span class="core-ring"></span>
+                  <span class="core-pulse"></span>
+                  <img src="/logo.png" alt="" />
+                </div>
 
-            @for (app of appNodes(); track app.name) {
-              <a
-                class="network-node"
-                [class.node-connected]="isConnectedApp(app)"
-                [class.node-disconnected]="!isConnectedApp(app)"
-                [attr.data-node]="app.index % 9"
-                [href]="app.url"
-                [attr.aria-label]="displayAppName(app)"
-                [attr.title]="displayAppName(app)"
-                target="_blank"
-                rel="noopener"
-                (click)="openApp(app, $event)"
-              >
-                <span class="node-orbit" aria-hidden="true"></span>
-                <span class="node-icon" aria-hidden="true">
-                  @if (appLogoUrl(app)) {
-                    <img [src]="appLogoUrl(app)" alt="" />
-                  } @else {
-                    {{ app.icon }}
+                <svg class="network-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                  @for (link of appNodeLinks(); track link.id) {
+                    <line
+                      [class.gps-verified]="link.isMontaoGpsConnection && montaoGpsUserExists()"
+                      [class.rent-verified]="link.isMontaoRentConnection && montaoRentUserExists()"
+                      [class.crm-verified]="link.isMontaoCrmConnection && montaoCrmUserExists()"
+                      [class.gps-rent-verified]="link.isMontaoGpsRentConnection && montaoGpsUserExists() && montaoRentUserExists()"
+                      [class.crm-rent-verified]="link.isMontaoCrmRentConnection && montaoCrmUserExists() && montaoRentUserExists()"
+                      [style.stroke]="isVerifiedLink(link) ? 'rgba(34, 197, 94, 0.95)' : null"
+                      [style.stroke-width]="isVerifiedLink(link) ? 0.46 : null"
+                      [attr.x1]="link.x1"
+                      [attr.y1]="link.y1"
+                      [attr.x2]="link.x2"
+                      [attr.y2]="link.y2"
+                    />
                   }
-                </span>
-                <span class="node-copy">
-                  <strong>{{ displayAppName(app) }}</strong>
-                  <small>
-                    @if (ssoLoadingApp() === displayAppName(app)) {
-                      Entrando con SSO...
-                    } @else {
-                      {{ app.description }}
-                    }
-                  </small>
-                </span>
-              </a>
+                </svg>
+
+                @for (app of appNodes(); track app.name) {
+                  <a
+                    class="network-node"
+                    [class.node-connected]="isConnectedApp(app)"
+                    [class.node-disconnected]="!isConnectedApp(app)"
+                    [attr.data-node]="app.index % 9"
+                    [href]="app.url"
+                    [attr.aria-label]="displayAppName(app)"
+                    [attr.title]="displayAppName(app)"
+                    target="_blank"
+                    rel="noopener"
+                    (click)="openApp(app, $event)"
+                  >
+                    <span class="node-orbit" aria-hidden="true"></span>
+                    <span class="node-icon" aria-hidden="true">
+                      @if (appLogoUrl(app)) {
+                        <img [src]="appLogoUrl(app)" alt="" />
+                      } @else {
+                        {{ app.icon }}
+                      }
+                    </span>
+                    <span class="node-copy">
+                      <strong>{{ displayAppName(app) }}</strong>
+                      @if (isConnectedApp(app)) {
+                        <em>Conectado</em>
+                      }
+                      <small>
+                        @if (ssoLoadingApp() === displayAppName(app)) {
+                          Entrando con SSO...
+                        } @else {
+                          {{ app.description }}
+                        }
+                      </small>
+                    </span>
+                  </a>
+                }
+              </section>
+            } @else {
+              <section class="systems-grid" aria-label="Grid de sistemas">
+                @for (app of apps(); track app.name) {
+                  <a
+                    class="system-tile"
+                    [class.tile-connected]="isConnectedApp(app)"
+                    [class.tile-disconnected]="!isConnectedApp(app)"
+                    [href]="app.url"
+                    target="_blank"
+                    rel="noopener"
+                    (click)="openApp(app, $event)">
+                    <span class="tile-logo" aria-hidden="true">
+                      @if (appLogoUrl(app)) {
+                        <img [src]="appLogoUrl(app)" alt="" />
+                      } @else {
+                        {{ app.icon }}
+                      }
+                    </span>
+                    <span class="tile-copy">
+                      <strong>{{ displayAppName(app) }}</strong>
+                      @if (isConnectedApp(app)) {
+                        <em>Conectado</em>
+                      }
+                      <small>
+                        @if (ssoLoadingApp() === displayAppName(app)) {
+                          Entrando con SSO...
+                        } @else {
+                          {{ app.description }}
+                        }
+                      </small>
+                    </span>
+                  </a>
+                }
+              </section>
             }
           </section>
         } @else {

@@ -46,6 +46,9 @@ interface LoginResponse {
 }
 
 type AuthMode = 'login' | 'register';
+type DashboardViewMode = 'network' | 'grid';
+type WorkspaceView = 'dashboard' | 'settings';
+type ThemeMode = 'dark' | 'light';
 
 declare global {
   interface Window {
@@ -75,17 +78,27 @@ export class App implements OnInit {
   private readonly apiUrl = getApiUrl();
   private readonly tokenKey = 'montao_index_token';
   private readonly userKey = 'montao_index_user';
+  private readonly themeKey = 'montao_index_theme';
 
   protected readonly apps = signal<CompanyApp[]>([]);
   protected readonly authMode = signal<AuthMode>('login');
   protected readonly name = signal('');
   protected readonly email = signal('');
   protected readonly password = signal('');
+  protected readonly profileName = signal('');
+  protected readonly profileEmail = signal('');
+  protected readonly profilePassword = signal('');
+  protected readonly profilePasswordConfirm = signal('');
+  protected readonly profileMessage = signal('');
+  protected readonly isSavingProfile = signal(false);
   protected readonly authToken = signal<string | null>(null);
   protected readonly user = signal<AuthUser | null>(null);
   protected readonly errorMessage = signal('');
   protected readonly isLoading = signal(false);
   protected readonly ssoLoadingApp = signal('');
+  protected readonly dashboardViewMode = signal<DashboardViewMode>('network');
+  protected readonly workspaceView = signal<WorkspaceView>('dashboard');
+  protected readonly themeMode = signal<ThemeMode>('dark');
   protected readonly montaoGpsUserExists = signal(false);
   protected readonly montaoRentUserExists = signal(false);
   protected readonly montaoCrmUserExists = signal(false);
@@ -192,12 +205,20 @@ export class App implements OnInit {
   });
 
   ngOnInit(): void {
+    const savedTheme = localStorage.getItem(this.themeKey);
     const token = localStorage.getItem(this.tokenKey);
     const savedUser = localStorage.getItem(this.userKey);
 
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+      this.themeMode.set(savedTheme);
+    }
+
     if (token) {
+      const parsedUser = savedUser ? (JSON.parse(savedUser) as AuthUser) : null;
       this.authToken.set(token);
-      this.user.set(savedUser ? JSON.parse(savedUser) : null);
+      this.user.set(parsedUser);
+      this.profileName.set(parsedUser?.name || '');
+      this.profileEmail.set(parsedUser?.email || '');
       void this.loadDashboardData();
       window.setTimeout(() => void this.loadExternalUserStatuses(), 500);
     }
@@ -219,6 +240,82 @@ export class App implements OnInit {
     this.authMode.set(mode);
     this.errorMessage.set('');
     this.password.set('');
+  }
+
+  protected setThemeMode(mode: string): void {
+    if (mode !== 'light' && mode !== 'dark') {
+      return;
+    }
+
+    this.themeMode.set(mode);
+    localStorage.setItem(this.themeKey, mode);
+  }
+
+  protected updateProfileName(value: string): void {
+    this.profileName.set(value);
+    this.profileMessage.set('');
+  }
+
+  protected updateProfileEmail(value: string): void {
+    this.profileEmail.set(value);
+    this.profileMessage.set('');
+  }
+
+  protected updateProfilePassword(value: string): void {
+    this.profilePassword.set(value);
+    this.profileMessage.set('');
+  }
+
+  protected updateProfilePasswordConfirm(value: string): void {
+    this.profilePasswordConfirm.set(value);
+    this.profileMessage.set('');
+  }
+
+  protected async saveProfile(): Promise<void> {
+    const token = this.authToken();
+
+    if (!token) {
+      return;
+    }
+
+    if (this.profilePassword() !== this.profilePasswordConfirm()) {
+      this.profileMessage.set('Las contrasenas no coinciden');
+      return;
+    }
+
+    this.errorMessage.set('');
+    this.profileMessage.set('');
+    this.isSavingProfile.set(true);
+
+    try {
+      const response = await fetch(`${this.apiUrl}/auth/me`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: this.profileName().trim(),
+          email: this.profileEmail().trim(),
+          password: this.profilePassword(),
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({ message: 'No se pudo guardar el usuario' }));
+        throw new Error(payload.message || 'No se pudo guardar el usuario');
+      }
+
+      const payload = (await response.json()) as LoginResponse;
+      this.setSession(payload);
+      this.profilePassword.set('');
+      this.profilePasswordConfirm.set('');
+      this.profileMessage.set('Usuario actualizado');
+    } catch (error) {
+      this.profileMessage.set(error instanceof Error ? error.message : 'No se pudo guardar el usuario');
+    } finally {
+      this.isSavingProfile.set(false);
+    }
   }
 
   protected async submitAuth(): Promise<void> {
@@ -301,6 +398,11 @@ export class App implements OnInit {
     this.montaoRentUserExists.set(false);
     this.montaoCrmUserExists.set(false);
     this.password.set('');
+    this.profileName.set('');
+    this.profileEmail.set('');
+    this.profilePassword.set('');
+    this.profilePasswordConfirm.set('');
+    this.profileMessage.set('');
   }
 
   protected isMontaoGpsApp(app: CompanyApp): boolean {
@@ -436,6 +538,8 @@ export class App implements OnInit {
     localStorage.setItem(this.userKey, JSON.stringify(payload.user));
     this.authToken.set(payload.token);
     this.user.set(payload.user);
+    this.profileName.set(payload.user.name || '');
+    this.profileEmail.set(payload.user.email || '');
     this.password.set('');
   }
 
