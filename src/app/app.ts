@@ -31,6 +31,7 @@ interface AppNodeLink {
   isMontaoRentConnection: boolean;
   isMontaoCrmConnection: boolean;
   isMontaoGpsRentConnection: boolean;
+  isMontaoCrmRentConnection: boolean;
 }
 
 interface AuthUser {
@@ -136,11 +137,23 @@ export class App implements OnInit {
         isMontaoRentConnection: this.isMontaoRentApp(node),
         isMontaoCrmConnection: this.isMontaoCrmApp(node),
         isMontaoGpsRentConnection: false,
+        isMontaoCrmRentConnection: false,
       });
     }
 
     for (let index = 0; index < nodes.length - 1; index += 1) {
-      links.push(this.createNodeLink(nodes[index], nodes[index + 1], `chain-${index}`));
+      const from = nodes[index];
+      const to = nodes[index + 1];
+
+      if (
+        this.isMontaoTalleresApp(from) ||
+        this.isMontaoTalleresApp(to) ||
+        this.isGpsMetricasNodePair(from, to)
+      ) {
+        continue;
+      }
+
+      links.push(this.createNodeLink(from, to, `chain-${index}`));
     }
 
     const crmNode = nodes.find((node) => node.name.toLowerCase().includes('crm'));
@@ -156,6 +169,23 @@ export class App implements OnInit {
 
     if (gpsNode && rentNode && !hasGpsRentLink) {
       links.push(this.createNodeLink(gpsNode, rentNode, 'montao-gps-rent'));
+    }
+
+    const hasCrmRentLink = links.some((link) => link.isMontaoCrmRentConnection);
+
+    if (crmNode && rentNode && !hasCrmRentLink) {
+      links.push(this.createNodeLink(crmNode, rentNode, 'montao-crm-rent'));
+    }
+
+    const talleresNode = nodes.find((node) => this.isMontaoTalleresApp(node));
+    const metricasNode = nodes.find((node) => this.isMontaoMetricasApp(node));
+
+    if (talleresNode && gpsNode) {
+      links.push(this.createNodeLink(talleresNode, gpsNode, 'montao-talleres-gps'));
+    }
+
+    if (talleresNode && metricasNode) {
+      links.push(this.createNodeLink(talleresNode, metricasNode, 'montao-talleres-metricas'));
     }
 
     return links;
@@ -285,12 +315,21 @@ export class App implements OnInit {
     return app.name.toLowerCase().includes('crm');
   }
 
+  protected isMontaoTalleresApp(app: CompanyApp): boolean {
+    return app.name.toLowerCase().includes('taller');
+  }
+
+  protected isMontaoMetricasApp(app: CompanyApp): boolean {
+    return app.name.toLowerCase().includes('metrica');
+  }
+
   protected isVerifiedLink(link: AppNodeLink): boolean {
     return (
       (link.isMontaoGpsConnection && this.montaoGpsUserExists()) ||
       (link.isMontaoRentConnection && this.montaoRentUserExists()) ||
       (link.isMontaoCrmConnection && this.montaoCrmUserExists()) ||
-      (link.isMontaoGpsRentConnection && this.montaoGpsUserExists() && this.montaoRentUserExists())
+      (link.isMontaoGpsRentConnection && this.montaoGpsUserExists() && this.montaoRentUserExists()) ||
+      (link.isMontaoCrmRentConnection && this.montaoCrmUserExists() && this.montaoRentUserExists())
     );
   }
 
@@ -335,6 +374,10 @@ export class App implements OnInit {
 
     if (appName.includes('metrica')) {
       return '/logometricas.png';
+    }
+
+    if (this.isMontaoTalleresApp(app)) {
+      return '/logotaller.png';
     }
 
     return '';
@@ -441,6 +484,7 @@ export class App implements OnInit {
       isMontaoRentConnection: false,
       isMontaoCrmConnection: false,
       isMontaoGpsRentConnection: this.isGpsRentNodePair(from, to),
+      isMontaoCrmRentConnection: this.isCrmRentNodePair(from, to),
     };
   }
 
@@ -448,6 +492,20 @@ export class App implements OnInit {
     return (
       (this.isMontaoGpsApp(from) && this.isMontaoRentApp(to)) ||
       (this.isMontaoRentApp(from) && this.isMontaoGpsApp(to))
+    );
+  }
+
+  private isCrmRentNodePair(from: AppNode, to: AppNode): boolean {
+    return (
+      (this.isMontaoCrmApp(from) && this.isMontaoRentApp(to)) ||
+      (this.isMontaoRentApp(from) && this.isMontaoCrmApp(to))
+    );
+  }
+
+  private isGpsMetricasNodePair(from: AppNode, to: AppNode): boolean {
+    return (
+      (this.isMontaoGpsApp(from) && this.isMontaoMetricasApp(to)) ||
+      (this.isMontaoMetricasApp(from) && this.isMontaoGpsApp(to))
     );
   }
 
