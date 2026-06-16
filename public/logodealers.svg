@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="Montao Dealers">
+  <rect width="192" height="192" rx="96" fill="#d62f33"/>
+  <path fill="#fff" d="M45 72h102l-7-22H52l-7 22Z"/>
+  <path fill="#fff" d="M48 80h96v42H48V80Zm14 14v16h22V94H62Zm32 0v16h36V94H94Z" opacity=".94"/>
+  <path fill="#fff" d="M38 122h116v16H38z"/>
+  <path fill="#fff" d="M59 138h74v14H59z" opacity=".88"/>
+  <path fill="#d62f33" d="M58 78h76v6H58z"/>
+  <path fill="#d62f33" d="M72 124h18v10H72zm30 0h18v10h-18z"/>
+</svg>

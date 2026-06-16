@@ -1,0 +1,108 @@
+<section class="settings-page" aria-label="Perfil y configuracion">
+  <header class="settings-header">
+    <nav class="breadcrumbs" aria-label="Ruta">
+      <span><i class="pi pi-home" aria-hidden="true"></i></span>
+      <span><i class="pi pi-angle-right" aria-hidden="true"></i></span>
+      <strong>Perfil</strong>
+    </nav>
+
+    <div class="profile-tabs" aria-label="Secciones de perfil">
+      <button class="active" type="button">Configuracion</button>
+    </div>
+  </header>
+
+  <div class="settings-grid">
+    <form class="settings-card profile-card" (ngSubmit)="vm.saveProfile()">
+      <h3><span><i class="pi pi-user-edit" aria-hidden="true"></i></span> Mi usuario</h3>
+      <label class="settings-field stacked">
+<span>Nombre</span>
+<input
+  name="profileName"
+  type="text"
+  autocomplete="name"
+  placeholder="Tu nombre"
+  [ngModel]="vm.profileName()"
+  (ngModelChange)="vm.updateProfileName($event)"
+  required
+/>
+      </label>
+      <label class="settings-field stacked">
+<span>Correo</span>
+<input
+  name="profileEmail"
+  type="email"
+  autocomplete="email"
+  placeholder="correo@montao.com"
+  [ngModel]="vm.profileEmail()"
+  (ngModelChange)="vm.updateProfileEmail($event)"
+  required
+/>
+      </label>
+      <label class="settings-field stacked">
+<span>Nueva contraseña</span>
+<input
+  name="profilePassword"
+  type="password"
+  autocomplete="new-password"
+  placeholder="Dejala vacia para no cambiarla"
+  [ngModel]="vm.profilePassword()"
+  (ngModelChange)="vm.updateProfilePassword($event)"
+/>
+      </label>
+      <label class="settings-field stacked">
+<span>Confirmar contraseña</span>
+<input
+  name="profilePasswordConfirm"
+  type="password"
+  autocomplete="new-password"
+  placeholder="Confirma la nueva contraseña"
+  [ngModel]="vm.profilePasswordConfirm()"
+  (ngModelChange)="vm.updateProfilePasswordConfirm($event)"
+/>
+      </label>
+      @if (vm.profileMessage()) {
+<p class="profile-message">{{ vm.profileMessage() }}</p>
+      }
+      <button class="save-settings" type="submit" [disabled]="vm.isSavingProfile()">
+{{ vm.isSavingProfile() ? 'Guardando...' : 'Guardar usuario' }}
+      </button>
+    </form>
+
+    <section class="settings-card settings-card-tall">
+      <h3><span><i class="pi pi-palette" aria-hidden="true"></i></span> Tema de la Aplicacion</h3>
+      <label class="settings-field">
+<select
+  aria-label="Tema"
+  [ngModel]="vm.themeMode()"
+  (ngModelChange)="vm.setThemeMode($event)"
+>
+  <option value="dark">Oscuro</option>
+  <option value="light">Claro</option>
+</select>
+      </label>
+
+      <div class="theme-options" aria-label="Opciones de tema">
+<button
+  class="theme-preview light"
+  type="button"
+  [class.active]="vm.themeMode() === 'light'"
+  (click)="vm.setThemeMode('light')"
+>
+  <span></span>
+  <strong>Claro</strong>
+</button>
+<button
+  class="theme-preview dark"
+  type="button"
+  [class.active]="vm.themeMode() === 'dark'"
+  (click)="vm.setThemeMode('dark')"
+>
+  <span></span>
+  <strong>Oscuro</strong>
+</button>
+      </div>
+
+      <p>Personaliza la apariencia de la aplicacion</p>
+    </section>
+  </div>
+</section>

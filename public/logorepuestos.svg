@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="Montao Repuestos">
+  <rect width="192" height="192" rx="96" fill="#d62f33"/>
+  <path d="M56 126 90 92l10 10-34 34a17 17 0 1 1-10-10Z" fill="#fff"/>
+  <path d="M111 53c10-5 23-3 31 5l-25 25 12 12 25-25c8 17 0 38-18 46-11 5-24 4-33-4L78 137c-6 6-16 6-22 0s-6-16 0-22l25-25c-8-18-1-31 30-37Z" fill="#fff" opacity=".92"/>
+  <circle cx="66" cy="126" r="6" fill="#d62f33"/>
+</svg>

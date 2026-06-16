@@ -1,0 +1,492 @@
+<section
+  class="mail-page"
+  [class.mail-page-dark]="vm.themeMode() === 'dark'"
+  [class.mail-page-light]="vm.themeMode() === 'light'"
+  aria-label="Correos"
+>
+    <section class="gmail-shell">
+      <header class="gmail-header" [class.has-mailbox-switcher]="vm.mailboxOptions().length > 1">
+<div class="gmail-title">
+  <span class="gmail-logo" aria-hidden="true">
+    <i class="pi pi-envelope"></i>
+  </span>
+  <strong>Correos</strong>
+</div>
+
+@if (vm.mailboxOptions().length > 1) {
+  <label class="mailbox-switcher">
+    <span>Cuenta</span>
+    <select
+      name="selectedMailbox"
+      aria-label="Buzon activo"
+      [ngModel]="vm.selectedMailboxEmail()"
+      (ngModelChange)="vm.updateSelectedMailbox($event)"
+    >
+      @for (mailbox of vm.mailboxOptions(); track mailbox.email) {
+        <option [value]="mailbox.email">
+          {{ mailbox.email }}{{ mailbox.delegated ? ' (delegado)' : '' }}
+        </option>
+      }
+    </select>
+  </label>
+}
+
+<label class="gmail-search" aria-label="Buscar en el correo">
+  <i class="pi pi-search" aria-hidden="true"></i>
+  <input
+    name="mailSearch"
+    type="search"
+    autocomplete="off"
+    placeholder="Buscar en el correo"
+    [ngModel]="vm.mailSearch()"
+    (ngModelChange)="vm.updateMailSearch($event)"
+  />
+  <i class="pi pi-sliders-h" aria-hidden="true"></i>
+</label>
+
+<div class="gmail-header-actions">
+  <button
+    class="gmail-icon-button"
+    type="button"
+    title="Refrescar"
+    aria-label="Refrescar correos"
+    (click)="vm.loadMailMessages()"
+    [disabled]="vm.mailboxLoading()"
+  >
+    <i class="pi pi-refresh" aria-hidden="true"></i>
+  </button>
+  <button
+    class="gmail-icon-button"
+    type="button"
+    title="Salir"
+    aria-label="Cerrar sesion"
+    (click)="vm.logout()"
+  >
+    <i class="pi pi-sign-out" aria-hidden="true"></i>
+  </button>
+  <span class="gmail-avatar" aria-hidden="true">{{ vm.userInitials() }}</span>
+</div>
+      </header>
+
+      <div class="gmail-body">
+<aside class="gmail-mailbox-nav" aria-label="Carpetas de correo">
+  <div class="gmail-account-card">
+    <strong>{{ vm.selectedMailboxEmail() || vm.mailboxStatus()?.email || 'Correo' }}</strong>
+    <button class="gmail-icon-button" type="button" title="Opciones de cuenta" aria-label="Opciones de cuenta">
+      <i class="pi pi-ellipsis-v" aria-hidden="true"></i>
+    </button>
+  </div>
+
+  <button
+    class="gmail-compose-button"
+    type="button"
+    (click)="vm.openCompose()"
+    [disabled]="!vm.mailboxStatus()?.configured"
+  >
+    <i class="pi pi-pencil" aria-hidden="true"></i>
+    Redactar
+  </button>
+
+  <nav>
+    @for (folder of vm.mailFolders; track folder.id) {
+      <button
+        type="button"
+        [class.active]="vm.selectedMailBox() === folder.id"
+        (click)="vm.updateMailFolder(folder.id)"
+        [disabled]="vm.mailboxLoading()"
+      >
+        <i class="pi {{ folder.icon }}" aria-hidden="true"></i>
+        <span>{{ folder.label }}</span>
+        @if (vm.mailFolderBadge(folder.id)) {
+          <small>{{ vm.mailFolderBadge(folder.id) }}</small>
+        }
+      </button>
+    }
+  </nav>
+</aside>
+
+<section class="gmail-inbox-panel" aria-label="Lista de correos">
+  <header class="gmail-mail-toolbar">
+    <button
+      class="mail-tool-button"
+      type="button"
+      [class.active]="vm.mailSelectionMode()"
+      (click)="vm.toggleMailSelectionMode()"
+    >
+      <i class="pi pi-mouse" aria-hidden="true"></i>
+      <span>Seleccionar</span>
+    </button>
+    <button
+      class="mail-tool-button"
+      type="button"
+      [class.active]="vm.mailThreadsEnabled()"
+      (click)="vm.toggleMailThreads()"
+    >
+      <i class="pi pi-comments" aria-hidden="true"></i>
+      <span>Hilos</span>
+    </button>
+    <button class="mail-tool-button active" type="button" (click)="vm.showMailOption('Opciones')">
+      <i class="pi pi-sliders-h" aria-hidden="true"></i>
+      <span>Opciones</span>
+    </button>
+    <button
+      class="mail-tool-button"
+      type="button"
+      (click)="vm.loadMailMessages()"
+      [disabled]="vm.mailboxLoading()"
+    >
+      <i class="pi pi-refresh" aria-hidden="true"></i>
+      <span>Actualizar</span>
+    </button>
+  </header>
+
+  <label class="gmail-list-search" aria-label="Buscar en la carpeta">
+    <i class="pi pi-search" aria-hidden="true"></i>
+    <input
+      name="mailFolderSearch"
+      type="search"
+      autocomplete="off"
+      placeholder="Buscar..."
+      [ngModel]="vm.mailSearch()"
+      (ngModelChange)="vm.updateMailSearch($event)"
+    />
+    <button type="button" title="Opciones de busqueda" aria-label="Opciones de busqueda">
+      <i class="pi pi-envelope" aria-hidden="true"></i>
+      <i class="pi pi-angle-down" aria-hidden="true"></i>
+    </button>
+  </label>
+
+  <header class="gmail-list-toolbar">
+    <div class="gmail-list-actions">
+      <span class="gmail-checkbox" aria-hidden="true"></span>
+      <button
+        class="gmail-icon-button"
+        type="button"
+        title="Refrescar"
+        aria-label="Refrescar correos"
+        (click)="vm.loadMailMessages()"
+        [disabled]="vm.mailboxLoading()"
+      >
+        <i class="pi pi-refresh" aria-hidden="true"></i>
+      </button>
+    </div>
+    <p>
+      {{ vm.visibleMailMessages().length }} de {{ vm.mailMessagesTotal() }}
+    </p>
+  </header>
+
+  @if (vm.mailError()) {
+    <p class="profile-message error-message mail-feedback">{{ vm.mailError() }}</p>
+  }
+
+  @if (vm.mailMessage()) {
+    <p class="profile-message mail-feedback">{{ vm.mailMessage() }}</p>
+  }
+
+  <div class="gmail-message-list">
+    @if (vm.mailboxLoading()) {
+      <p class="gmail-empty">Cargando correos...</p>
+    } @else if (vm.visibleMailMessages().length) {
+      @for (message of vm.visibleMailMessages(); track message.uid) {
+        <button
+          class="gmail-message-row"
+          type="button"
+          [class.unread]="message.unread"
+          [class.active]="vm.selectedMailMessage()?.uid === message.uid"
+          (click)="vm.openMailMessage(message)"
+        >
+          <span class="gmail-checkbox" aria-hidden="true"></span>
+          <i class="pi pi-star gmail-star" aria-hidden="true"></i>
+          <span class="gmail-sender-avatar" aria-hidden="true">
+            {{ vm.mailSenderInitial(message.from) }}
+          </span>
+          <strong class="gmail-sender">{{ vm.mailSenderName(message.from) }}</strong>
+          <span class="gmail-message-copy">
+            <strong>{{ vm.mailSubject(message) }}</strong>
+            <span>{{ vm.mailRowPreview(message) }}</span>
+          </span>
+          <time>{{ vm.formatMailDate(message.date) }}</time>
+        </button>
+      }
+    } @else if (!vm.mailboxStatus()?.configured) {
+      <p class="gmail-empty">No hay buzones disponibles para este usuario.</p>
+    } @else {
+      <div class="gmail-empty gmail-folder-empty">
+        <i class="pi pi-inbox" aria-hidden="true"></i>
+        <p>La lista está vacía.</p>
+      </div>
+    }
+  </div>
+
+  <footer class="gmail-list-footer">
+    <span>El buzón está vacío</span>
+    <div>
+      <button class="gmail-icon-button" type="button" disabled aria-label="Primera pagina">
+        <i class="pi pi-angle-double-left" aria-hidden="true"></i>
+      </button>
+      <button class="gmail-icon-button" type="button" disabled aria-label="Pagina anterior">
+        <i class="pi pi-angle-left" aria-hidden="true"></i>
+      </button>
+      <strong>1</strong>
+      <button class="gmail-icon-button" type="button" disabled aria-label="Pagina siguiente">
+        <i class="pi pi-angle-right" aria-hidden="true"></i>
+      </button>
+      <button class="gmail-icon-button" type="button" disabled aria-label="Ultima pagina">
+        <i class="pi pi-angle-double-right" aria-hidden="true"></i>
+      </button>
+    </div>
+  </footer>
+</section>
+
+<article class="gmail-reader-panel" aria-label="Correo seleccionado">
+  <header class="gmail-reader-toolbar">
+    <button
+      class="mail-tool-button"
+      type="button"
+      (click)="vm.replyToSelected()"
+      [disabled]="!vm.selectedMailMessage()"
+    >
+      <i class="pi pi-reply" aria-hidden="true"></i>
+      <span>Responder</span>
+    </button>
+    <button
+      class="mail-tool-button"
+      type="button"
+      (click)="vm.replyAllToSelected()"
+      [disabled]="!vm.selectedMailMessage()"
+    >
+      <i class="pi pi-reply" aria-hidden="true"></i>
+      <span>Responder ...</span>
+    </button>
+    <button
+      class="mail-tool-button"
+      type="button"
+      (click)="vm.forwardSelected()"
+      [disabled]="!vm.selectedMailMessage()"
+    >
+      <i class="pi pi-share-alt" aria-hidden="true"></i>
+      <span>Reenviar</span>
+    </button>
+    <button
+      class="mail-tool-button"
+      type="button"
+      (click)="vm.moveSelectedMail('Trash', 'Papelera')"
+      [disabled]="!vm.selectedMailMessage()"
+    >
+      <i class="pi pi-trash" aria-hidden="true"></i>
+      <span>Eliminar</span>
+    </button>
+    <button
+      class="mail-tool-button"
+      type="button"
+      (click)="vm.moveSelectedMail('Archive', 'Archivo')"
+      [disabled]="!vm.selectedMailMessage()"
+    >
+      <i class="pi pi-folder" aria-hidden="true"></i>
+      <span>Archivo</span>
+    </button>
+    <button
+      class="mail-tool-button"
+      type="button"
+      (click)="vm.moveSelectedMail('Junk', 'SPAM')"
+      [disabled]="!vm.selectedMailMessage()"
+    >
+      <i class="pi pi-ban" aria-hidden="true"></i>
+      <span>SPAM</span>
+    </button>
+    <button
+      class="mail-tool-button"
+      type="button"
+      (click)="vm.toggleSelectedMailReadState()"
+      [disabled]="!vm.selectedMailMessage()"
+    >
+      <i class="pi pi-tag" aria-hidden="true"></i>
+      <span>Marcar</span>
+    </button>
+    <button class="mail-tool-button" type="button" (click)="vm.showMailOption('Mas')">
+      <i class="pi pi-ellipsis-h" aria-hidden="true"></i>
+      <span>Más</span>
+    </button>
+  </header>
+
+  @if (vm.mailReading()) {
+    <p class="gmail-empty">Abriendo correo...</p>
+  } @else if (vm.selectedMailMessage()) {
+    <header class="gmail-reader-header">
+      <div>
+        <h2>{{ vm.mailSubject(vm.selectedMailMessage()!) }}</h2>
+        <p>
+          <strong>{{ vm.mailSenderName(vm.selectedMailMessage()?.from || []) }}</strong>
+          <span>{{ vm.mailAddressLine(vm.selectedMailMessage()?.from || []) }}</span>
+        </p>
+        <p>Para {{ vm.mailAddressLine(vm.selectedMailMessage()?.to || []) || vm.mailboxStatus()?.email }}</p>
+      </div>
+      <button class="gmail-reply-button" type="button" (click)="vm.replyToSelected()">
+        <i class="pi pi-reply" aria-hidden="true"></i>
+        Responder
+      </button>
+    </header>
+
+    <div class="gmail-reader-body">
+      <pre>{{ vm.selectedMailMessage()?.text || 'Este correo no tiene contenido de texto.' }}</pre>
+    </div>
+
+    @if (vm.selectedMailMessage()?.attachments?.length) {
+      <div class="gmail-attachments">
+        @for (attachment of vm.selectedMailMessage()?.attachments || []; track attachment.filename) {
+          <span>
+            <i class="pi pi-paperclip" aria-hidden="true"></i>
+            {{ attachment.filename }}
+          </span>
+        }
+      </div>
+    }
+  } @else {
+    <div class="gmail-reader-empty">
+      <i class="pi pi-envelope" aria-hidden="true"></i>
+      <p>Selecciona un correo para leerlo.</p>
+    </div>
+  }
+</article>
+      </div>
+    </section>
+
+    @if (vm.composeOpen() && vm.mailboxStatus()?.configured) {
+      <form
+        class="gmail-compose"
+        role="dialog"
+        aria-modal="false"
+        aria-label="Redactar correo"
+        (ngSubmit)="vm.sendMail()"
+      >
+        <header>
+          <h3>Nuevo mensaje</h3>
+          <button
+            type="button"
+            title="Cerrar"
+            aria-label="Cerrar"
+            (click)="vm.closeCompose()"
+            [disabled]="vm.mailSending()"
+          >
+            <i class="pi pi-times" aria-hidden="true"></i>
+          </button>
+        </header>
+
+        @if (vm.mailboxOptions().length > 1) {
+          <label class="gmail-compose-from">
+            <span>De</span>
+            <select
+              name="composeMailbox"
+              aria-label="Enviar desde"
+              [ngModel]="vm.selectedMailboxEmail()"
+              (ngModelChange)="vm.updateSelectedMailbox($event)"
+            >
+              @for (mailbox of vm.mailboxOptions(); track mailbox.email) {
+                <option [value]="mailbox.email">
+                  {{ mailbox.email }}{{ mailbox.delegated ? ' (delegado)' : '' }}
+                </option>
+              }
+            </select>
+          </label>
+        }
+
+        <label>
+          <span>Para</span>
+          <input
+            name="composeTo"
+            type="text"
+            autocomplete="email"
+            placeholder="correo@dominio.com"
+            [ngModel]="vm.composeTo()"
+            (ngModelChange)="vm.updateComposeTo($event)"
+            required
+          />
+        </label>
+
+        <label>
+          <span>Enviar copia a:</span>
+          <input
+            name="composeCc"
+            type="text"
+            autocomplete="email"
+            placeholder="Opcional"
+            [ngModel]="vm.composeCc()"
+            (ngModelChange)="vm.updateComposeCc($event)"
+          />
+        </label>
+
+        <label>
+          <span>Enviar copia oculta a:</span>
+          <input
+            name="composeBcc"
+            type="text"
+            autocomplete="email"
+            placeholder="Opcional"
+            [ngModel]="vm.composeBcc()"
+            (ngModelChange)="vm.updateComposeBcc($event)"
+          />
+        </label>
+
+        <label>
+          <span>Asunto</span>
+          <input
+            name="composeSubject"
+            type="text"
+            placeholder="Asunto del correo"
+            [ngModel]="vm.composeSubject()"
+            (ngModelChange)="vm.updateComposeSubject($event)"
+          />
+        </label>
+
+        <textarea
+          class="gmail-compose-body"
+          name="composeBody"
+          placeholder="Escribe el mensaje"
+          [ngModel]="vm.composeBody()"
+          (ngModelChange)="vm.updateComposeBody($event)"
+        ></textarea>
+
+        @if (vm.composeAttachments().length) {
+          <div class="gmail-compose-attachments">
+            @for (attachment of vm.composeAttachments(); track $index) {
+              <span>
+                <i class="pi pi-paperclip" aria-hidden="true"></i>
+                <strong [title]="attachment.name">{{ attachment.name }}</strong>
+                <small>{{ vm.formatAttachmentSize(attachment.size) }}</small>
+                <button
+                  type="button"
+                  title="Quitar archivo"
+                  aria-label="Quitar archivo"
+                  (click)="vm.removeComposeAttachment($index)"
+                  [disabled]="vm.mailSending()"
+                >
+                  <i class="pi pi-times" aria-hidden="true"></i>
+                </button>
+              </span>
+            }
+          </div>
+        }
+
+        @if (vm.mailError()) {
+          <p class="profile-message error-message">{{ vm.mailError() }}</p>
+        }
+
+        <footer>
+          <label class="gmail-attach-button" title="Adjuntar archivos">
+            <i class="pi pi-paperclip" aria-hidden="true"></i>
+            <span>Adjuntar</span>
+            <input
+              name="composeAttachments"
+              type="file"
+              multiple
+              (change)="vm.updateComposeAttachments($event)"
+              [disabled]="vm.mailSending()"
+            />
+          </label>
+          <button class="gmail-send-button" type="submit" [disabled]="vm.mailSending()">
+            {{ vm.mailSending() ? 'Enviando...' : 'Enviar' }}
+          </button>
+        </footer>
+      </form>
+    }
+</section>

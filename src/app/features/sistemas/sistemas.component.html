@@ -1,0 +1,121 @@
+@if (vm.appNodes().length) {
+<section class="dashboard-view-shell" aria-label="Sistemas">
+  <div class="view-switcher" aria-label="Tipo de visualizacion">
+    <button
+      type="button"
+      [class.active]="vm.dashboardViewMode() === 'network'"
+      (click)="vm.dashboardViewMode.set('network')">
+      Red
+    </button>
+    <button
+      type="button"
+      [class.active]="vm.dashboardViewMode() === 'grid'"
+      (click)="vm.dashboardViewMode.set('grid')">
+      Cuadricula
+    </button>
+  </div>
+
+  @if (vm.dashboardViewMode() === 'network') {
+    <section class="network-dashboard" aria-label="Mapa de aplicaciones">
+      <div class="network-core" aria-hidden="true">
+<span class="core-ring"></span>
+<span class="core-pulse"></span>
+<img src="/logo.png" alt="" />
+      </div>
+
+      <svg class="network-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+@for (link of vm.appNodeLinks(); track link.id) {
+  <line
+    [class.gps-verified]="link.isMontaoGpsConnection && vm.montaoGpsUserExists()"
+    [class.rent-verified]="link.isMontaoRentConnection && vm.montaoRentUserExists()"
+    [class.crm-verified]="link.isMontaoCrmConnection && vm.montaoCrmUserExists()"
+    [class.gps-rent-verified]="link.isMontaoGpsRentConnection && vm.montaoGpsUserExists() && vm.montaoRentUserExists()"
+    [class.crm-rent-verified]="link.isMontaoCrmRentConnection && vm.montaoCrmUserExists() && vm.montaoRentUserExists()"
+    [attr.x1]="link.x1"
+    [attr.y1]="link.y1"
+    [attr.x2]="link.x2"
+    [attr.y2]="link.y2"
+  />
+}
+      </svg>
+
+      @for (app of vm.appNodes(); track app.name) {
+<a
+  class="network-node"
+  [class.node-connected]="vm.isConnectedApp(app)"
+  [class.node-disconnected]="!vm.isConnectedApp(app)"
+  [attr.data-node]="app.index % 10"
+  [href]="app.url"
+  [attr.aria-label]="vm.displayAppName(app)"
+  [attr.title]="vm.displayAppName(app)"
+  target="_blank"
+  rel="noopener"
+  (click)="vm.openApp(app, $event)"
+>
+  <span class="node-orbit" aria-hidden="true"></span>
+  <span class="node-icon" aria-hidden="true">
+    @if (vm.appLogoUrl(app)) {
+      <img [src]="vm.appLogoUrl(app)" alt="" />
+    } @else {
+      {{ app.icon }}
+    }
+  </span>
+  <span class="node-copy">
+    <strong>{{ vm.displayAppName(app) }}</strong>
+    @if (vm.isConnectedApp(app)) {
+      <em>Conectado</em>
+    }
+    <small>
+      @if (vm.ssoLoadingApp() === vm.displayAppName(app)) {
+        Entrando con SSO...
+      } @else {
+        {{ app.description }}
+      }
+    </small>
+  </span>
+</a>
+      }
+    </section>
+  } @else {
+    <section class="systems-grid" aria-label="Grid de sistemas">
+      @for (app of vm.apps(); track app.name) {
+<a
+  class="system-tile"
+  [class.tile-connected]="vm.isConnectedApp(app)"
+  [class.tile-disconnected]="!vm.isConnectedApp(app)"
+  [href]="app.url"
+  target="_blank"
+  rel="noopener"
+  (click)="vm.openApp(app, $event)">
+  <span class="tile-logo" aria-hidden="true">
+    @if (vm.appLogoUrl(app)) {
+      <img [src]="vm.appLogoUrl(app)" alt="" />
+    } @else {
+      {{ app.icon }}
+    }
+  </span>
+  <span class="tile-copy">
+    <strong>{{ vm.displayAppName(app) }}</strong>
+    @if (vm.isConnectedApp(app)) {
+      <em>Conectado</em>
+    }
+    <small>
+      @if (vm.ssoLoadingApp() === vm.displayAppName(app)) {
+        Entrando con SSO...
+      } @else {
+        {{ app.description }}
+      }
+    </small>
+  </span>
+</a>
+      }
+    </section>
+  }
+</section>
+} @else {
+<section class="empty-state">
+  <h2>Sin aplicaciones</h2>
+  <p>No hay aplicaciones registradas.</p>
+</section>
+}
+

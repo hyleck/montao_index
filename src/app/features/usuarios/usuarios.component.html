@@ -1,0 +1,365 @@
+<section class="users-page" aria-label="Usuarios de plataforma">
+  <header class="settings-header">
+    <nav class="breadcrumbs" aria-label="Ruta">
+      <span><i class="pi pi-home" aria-hidden="true"></i></span>
+      <span><i class="pi pi-angle-right" aria-hidden="true"></i></span>
+      <strong>Usuarios</strong>
+    </nav>
+
+    <div class="profile-tabs" aria-label="Secciones de usuarios">
+      <button class="active" type="button">Usuarios</button>
+    </div>
+  </header>
+
+  @if (!vm.canManageUsers()) {
+    <div class="users-layout">
+      <section class="users-panel" aria-label="Permisos de usuarios">
+<header class="users-panel-header">
+  <div>
+    <h2>Usuarios</h2>
+    <p>Modulo de administracion de accesos</p>
+  </div>
+</header>
+<p class="users-empty">Tu usuario actual no tiene permisos de administrador.</p>
+      </section>
+    </div>
+  } @else {
+    <div class="users-layout">
+    <section class="users-panel" aria-label="Listado de usuarios">
+      <header class="users-panel-header">
+<div>
+  <h2>Usuarios</h2>
+  <p>{{ vm.platformUsers().length }} registrados para iniciar sesion</p>
+</div>
+<div class="users-panel-actions">
+  <button class="save-settings" type="button" (click)="vm.openNewUserModal()">
+    <i class="pi pi-user-plus" aria-hidden="true"></i>
+    Nuevo usuario
+  </button>
+  <button
+    class="icon-action"
+    type="button"
+    title="Recargar usuarios"
+    aria-label="Recargar usuarios"
+    (click)="vm.loadPlatformUsers()"
+    [disabled]="vm.usersLoading()"
+  >
+    <i class="pi pi-refresh" aria-hidden="true"></i>
+  </button>
+</div>
+      </header>
+
+      @if (vm.usersError() && !vm.userEditorOpen()) {
+<p class="profile-message error-message users-feedback">{{ vm.usersError() }}</p>
+      }
+
+      @if (vm.usersMessage() && !vm.userEditorOpen()) {
+<p class="profile-message users-feedback">{{ vm.usersMessage() }}</p>
+      }
+
+      @if (vm.usersLoading()) {
+<p class="users-empty">Cargando usuarios...</p>
+      } @else if (vm.platformUsers().length) {
+<div class="users-table-wrap">
+  <table class="users-table">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Correo</th>
+        <th>Rol</th>
+        <th>Creado</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (item of vm.platformUsers(); track item.id) {
+        <tr [class.active-row]="vm.editingUserId() === item.id">
+          <td data-label="Nombre">
+            <strong>{{ item.name }}</strong>
+          </td>
+          <td data-label="Correo">{{ item.email }}</td>
+          <td data-label="Rol">
+            <span class="role-pill" [class.admin]="item.role === 'admin'">
+              {{ item.role === 'admin' ? 'Admin' : 'Usuario' }}
+            </span>
+          </td>
+          <td data-label="Creado">{{ vm.formatUserDate(item.createdAt) }}</td>
+          <td data-label="Acciones">
+            <div class="row-actions">
+              <button
+                class="icon-action"
+                type="button"
+                title="Editar"
+                aria-label="Editar usuario"
+                (click)="vm.editPlatformUser(item)"
+              >
+                <i class="pi pi-pencil" aria-hidden="true"></i>
+              </button>
+              <button
+                class="icon-action danger"
+                type="button"
+                title="Eliminar"
+                aria-label="Eliminar usuario"
+                (click)="vm.deletePlatformUser(item)"
+                [disabled]="vm.usersDeletingId() === item.id"
+              >
+                <i class="pi pi-trash" aria-hidden="true"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+      } @else {
+<p class="users-empty">No hay usuarios registrados.</p>
+      }
+    </section>
+    </div>
+
+    @if (vm.userEditorOpen()) {
+      <div
+class="user-modal-backdrop"
+role="presentation"
+(click)="vm.closeUserModal()"
+      >
+<form
+  class="settings-card user-editor user-modal"
+  role="dialog"
+  aria-modal="true"
+  [attr.aria-label]="vm.editingUserId() ? 'Editar usuario' : 'Nuevo usuario'"
+  (click)="$event.stopPropagation()"
+  (ngSubmit)="vm.savePlatformUser()"
+>
+  <header class="user-modal-header">
+    <h3>
+      <span>
+        <i
+          class="pi"
+          [class.pi-user-plus]="!vm.editingUserId()"
+          [class.pi-user-edit]="vm.editingUserId()"
+          aria-hidden="true"
+        ></i>
+      </span>
+      {{ vm.editingUserId() ? 'Editar usuario' : 'Nuevo usuario' }}
+    </h3>
+    <button
+      class="icon-action"
+      type="button"
+      title="Cerrar"
+      aria-label="Cerrar modal"
+      (click)="vm.closeUserModal()"
+      [disabled]="vm.usersSaving()"
+    >
+      <i class="pi pi-times" aria-hidden="true"></i>
+    </button>
+  </header>
+
+  <label class="settings-field stacked">
+    <span>Nombre</span>
+    <input
+      name="userName"
+      type="text"
+      autocomplete="name"
+      placeholder="Nombre completo"
+      [ngModel]="vm.userFormName()"
+      (ngModelChange)="vm.updateUserFormName($event)"
+      required
+    />
+  </label>
+
+  @if (vm.editingUserId()) {
+    <label class="settings-field stacked">
+      <span>Correo</span>
+      <input
+        name="userEmail"
+        type="email"
+        autocomplete="email"
+        placeholder="correo@montao.com"
+        [ngModel]="vm.userFormEmail()"
+        (ngModelChange)="vm.updateUserFormEmail($event)"
+        required
+      />
+    </label>
+  } @else {
+    <label class="settings-field stacked">
+      <span>Nombre de usuario</span>
+      <span class="username-field">
+        <input
+          name="userEmail"
+          type="text"
+          autocomplete="username"
+          placeholder="usuario"
+          [ngModel]="vm.userFormEmail()"
+          (ngModelChange)="vm.updateUserFormEmail($event)"
+          required
+        />
+        <small>{{ vm.userEmailDomain }}</small>
+      </span>
+      @if (vm.usernameAvailabilityMessage()) {
+        <small
+          class="username-availability"
+          [class.status-checking]="vm.usernameAvailabilityStatus() === 'checking'"
+          [class.status-available]="vm.usernameAvailabilityStatus() === 'available'"
+          [class.status-taken]="vm.usernameAvailabilityStatus() === 'taken'"
+          [class.status-error]="vm.usernameAvailabilityStatus() === 'error'"
+        >
+          {{ vm.usernameAvailabilityMessage() }}
+        </small>
+      }
+    </label>
+  }
+
+  <label class="settings-field stacked">
+    <span>Rol</span>
+    <select
+      name="userRole"
+      aria-label="Rol del usuario"
+      [ngModel]="vm.userFormRole()"
+      (ngModelChange)="vm.updateUserFormRole($event)"
+    >
+      <option value="user">Usuario</option>
+      <option value="admin">Administrador</option>
+    </select>
+  </label>
+
+  <div class="settings-field stacked delegated-access-field">
+    <span>Accesos a correos</span>
+    <button
+      class="mail-access-open"
+      type="button"
+      (click)="vm.openMailboxAccessModal()"
+      [disabled]="!vm.delegatableMailboxUsers().length || vm.usersSaving()"
+    >
+      <i class="pi pi-envelope" aria-hidden="true"></i>
+      <strong>
+        {{ vm.userFormDelegatedMailboxes().length ? vm.userFormDelegatedMailboxes().length + ' correos con acceso' : 'Dar acceso a correos' }}
+      </strong>
+      <small>
+        {{ vm.delegatableMailboxUsers().length ? 'Seleccionar usuarios existentes' : 'No hay otros usuarios disponibles' }}
+      </small>
+      <i class="pi pi-angle-right" aria-hidden="true"></i>
+    </button>
+
+    @if (vm.selectedDelegatedMailboxEmails().length) {
+      <div class="mail-access-chips" aria-label="Correos seleccionados">
+        @for (email of vm.selectedDelegatedMailboxEmails(); track email) {
+          <span>{{ email }}</span>
+        }
+      </div>
+    }
+  </div>
+
+  <label class="settings-field stacked">
+    <span>{{ vm.editingUserId() ? 'Nueva contrasena' : 'Contrasena' }}</span>
+    <input
+      name="userPassword"
+      type="password"
+      autocomplete="new-password"
+      [placeholder]="vm.editingUserId() ? 'Dejala vacia para no cambiarla' : 'Minimo 6 caracteres'"
+      [ngModel]="vm.userFormPassword()"
+      (ngModelChange)="vm.updateUserFormPassword($event)"
+      [required]="!vm.editingUserId()"
+    />
+  </label>
+
+  @if (vm.usersError()) {
+    <p class="profile-message error-message">{{ vm.usersError() }}</p>
+  }
+
+  <div class="editor-actions">
+    <button
+      class="save-settings"
+      type="submit"
+      [disabled]="vm.usersSaving() || vm.isUsernameSaveBlocked()"
+    >
+      <i class="pi pi-save" aria-hidden="true"></i>
+      {{ vm.usersSaving() ? 'Guardando...' : 'Guardar' }}
+    </button>
+    <button
+      class="ghost-action"
+      type="button"
+      (click)="vm.closeUserModal()"
+      [disabled]="vm.usersSaving()"
+    >
+      <i class="pi pi-times" aria-hidden="true"></i>
+      Cancelar
+    </button>
+  </div>
+</form>
+
+        @if (vm.mailboxAccessModalOpen()) {
+          <div
+            class="mail-access-modal-backdrop"
+            role="presentation"
+            (click)="vm.closeMailboxAccessModal(); $event.stopPropagation()"
+          >
+            <section
+              class="settings-card mail-access-modal"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Dar acceso a correos"
+              (click)="$event.stopPropagation()"
+            >
+              <header class="mail-access-modal-header">
+                <div>
+                  <h3>Dar acceso a correos</h3>
+                  <p>{{ vm.userFormDelegatedMailboxes().length }} seleccionados</p>
+                </div>
+                <button
+                  class="icon-action"
+                  type="button"
+                  title="Cerrar"
+                  aria-label="Cerrar selector de correos"
+                  (click)="vm.closeMailboxAccessModal()"
+                >
+                  <i class="pi pi-times" aria-hidden="true"></i>
+                </button>
+              </header>
+
+              <label class="mail-access-search">
+                <i class="pi pi-search" aria-hidden="true"></i>
+                <input
+                  type="search"
+                  autocomplete="off"
+                  placeholder="Buscar usuario o correo"
+                  [ngModel]="vm.mailboxAccessSearch()"
+                  (ngModelChange)="vm.updateMailboxAccessSearch($event)"
+                />
+              </label>
+
+              <div class="mail-access-list">
+                @if (vm.filteredDelegatableMailboxUsers().length) {
+                  @for (mailUser of vm.filteredDelegatableMailboxUsers(); track mailUser.id) {
+                    <label class="mail-access-option">
+                      <input
+                        type="checkbox"
+                        [checked]="vm.isDelegatedMailboxSelected(mailUser.email)"
+                        (change)="vm.toggleUserDelegatedMailbox(mailUser.email, $event)"
+                      />
+                      <span>
+                        <strong>{{ mailUser.email }}</strong>
+                        <small>{{ mailUser.name }}</small>
+                      </span>
+                    </label>
+                  }
+                } @else {
+                  <p class="users-empty">No hay usuarios que coincidan.</p>
+                }
+              </div>
+
+              <footer class="mail-access-modal-footer">
+                <span>{{ vm.userFormDelegatedMailboxes().length }} correos seleccionados</span>
+                <button class="save-settings" type="button" (click)="vm.closeMailboxAccessModal()">
+                  <i class="pi pi-check" aria-hidden="true"></i>
+                  Listo
+                </button>
+              </footer>
+            </section>
+          </div>
+        }
+      </div>
+    }
+  }
+</section>

@@ -1,7 +1,7 @@
-@if (!authToken()) {
+@if (!vm.authToken()) {
   <main class="login-page">
     <section class="login-panel" aria-labelledby="login-title">
-      <a class="brand login-brand" href="/" aria-label="Montao Index">
+      <a class="brand login-brand" routerLink="/sistemas" aria-label="Montao Index">
         <span class="brand-mark">
           <img src="/logo.png" alt="" />
         </span>
@@ -13,28 +13,28 @@
 
       <div>
         <p class="login-kicker">Acceso privado</p>
-        <h1 id="login-title">{{ authMode() === 'login' ? 'Iniciar sesion' : 'Crear cuenta' }}</h1>
+        <h1 id="login-title">{{ vm.authMode() === 'login' ? 'Iniciar sesion' : 'Crear cuenta' }}</h1>
       </div>
 
       <div class="auth-tabs" aria-label="Modo de acceso">
         <button
           type="button"
-          [class.active]="authMode() === 'login'"
-          (click)="setAuthMode('login')"
+          [class.active]="vm.authMode() === 'login'"
+          (click)="vm.setAuthMode('login')"
         >
           Login
         </button>
         <button
           type="button"
-          [class.active]="authMode() === 'register'"
-          (click)="setAuthMode('register')"
+          [class.active]="vm.authMode() === 'register'"
+          (click)="vm.setAuthMode('register')"
         >
           Registro
         </button>
       </div>
 
-      <form class="login-form" (ngSubmit)="submitAuth()">
-        @if (authMode() === 'register') {
+      <form class="login-form" (ngSubmit)="vm.submitAuth()">
+        @if (vm.authMode() === 'register') {
           <label>
             <span>Nombre</span>
             <input
@@ -42,22 +42,22 @@
               type="text"
               autocomplete="name"
               placeholder="Tu nombre"
-              [ngModel]="name()"
-              (ngModelChange)="updateName($event)"
+              [ngModel]="vm.name()"
+              (ngModelChange)="vm.updateName($event)"
               required
             />
           </label>
         }
 
         <label>
-          <span>Correo</span>
+          <span>{{ vm.authMode() === 'login' ? 'Usuario o correo' : 'Correo' }}</span>
           <input
             name="email"
-            type="email"
-            autocomplete="email"
-            placeholder="correo@montao.com"
-            [ngModel]="email()"
-            (ngModelChange)="updateEmail($event)"
+            [type]="vm.authMode() === 'login' ? 'text' : 'email'"
+            [autocomplete]="vm.authMode() === 'login' ? 'username' : 'email'"
+            [placeholder]="vm.authMode() === 'login' ? 'usuario o correo@montao.net' : 'correo@montao.net'"
+            [ngModel]="vm.email()"
+            (ngModelChange)="vm.updateEmail($event)"
             required
           />
         </label>
@@ -69,30 +69,34 @@
             type="password"
             autocomplete="current-password"
             placeholder="Tu contrasena"
-            [ngModel]="password()"
-            (ngModelChange)="updatePassword($event)"
+            [ngModel]="vm.password()"
+            (ngModelChange)="vm.updatePassword($event)"
             required
           />
         </label>
 
-        @if (errorMessage()) {
-          <p class="form-error">{{ errorMessage() }}</p>
+        @if (vm.errorMessage()) {
+          <p class="form-error">{{ vm.errorMessage() }}</p>
         }
 
-        <button type="submit" [disabled]="isLoading()">
-          @if (isLoading()) {
-            {{ authMode() === 'login' ? 'Entrando...' : 'Creando...' }}
+        <button type="submit" [disabled]="vm.isLoading()">
+          @if (vm.isLoading()) {
+            {{ vm.authMode() === 'login' ? 'Entrando...' : 'Creando...' }}
           } @else {
-            {{ authMode() === 'login' ? 'Entrar' : 'Crear cuenta' }}
+            {{ vm.authMode() === 'login' ? 'Entrar' : 'Crear cuenta' }}
           }
         </button>
       </form>
     </section>
   </main>
 } @else {
-  <div class="app-shell" [class.light-mode]="themeMode() === 'light'">
+  <div
+    class="app-shell"
+    [class.light-mode]="vm.themeMode() === 'light'"
+    [class.dark-mode]="vm.themeMode() === 'dark'"
+  >
     <aside class="sidebar" aria-label="Navegacion principal">
-      <a class="brand" href="/" aria-label="Montao Index">
+      <a class="brand" routerLink="/sistemas" aria-label="Montao Index">
         <span class="brand-mark">
           <img src="/logo.png" alt="" />
         </span>
@@ -104,276 +108,66 @@
 
       <nav class="nav-block" aria-label="Favoritos">
         <p>Favoritos</p>
-        <button
+        <a
           class="nav-item"
-          type="button"
-          [class.active]="workspaceView() === 'dashboard'"
-          (click)="workspaceView.set('dashboard')"
+          routerLink="/sistemas"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
         >
           <span><i class="pi pi-th-large" aria-hidden="true"></i></span>
-          Dashboard
-          <small>{{ apps().length }}</small>
-        </button>
+          Sistemas
+          <small>{{ vm.apps().length }}</small>
+        </a>
+        <a
+          class="nav-item"
+          routerLink="/correos"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          <span><i class="pi pi-inbox" aria-hidden="true"></i></span>
+          Correos
+          <small>{{ vm.mailboxStatus()?.unseen || 0 }}</small>
+        </a>
       </nav>
 
       <nav class="nav-block system-menu" aria-label="Sistema">
         <p>Sistema</p>
-        <button
+        <a
           class="nav-item"
-          type="button"
-          [class.active]="workspaceView() === 'settings'"
-          (click)="workspaceView.set('settings')"
+          routerLink="/usuarios"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
+        >
+          <span><i class="pi pi-users" aria-hidden="true"></i></span>
+          Usuarios
+          <small>{{ vm.platformUsers().length }}</small>
+        </a>
+        <a
+          class="nav-item"
+          routerLink="/configuracion"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: true }"
         >
           <span><i class="pi pi-cog" aria-hidden="true"></i></span>
           Configuracion
-        </button>
+        </a>
       </nav>
     </aside>
 
     <div class="workspace">
       <header class="topbar">
         <div class="user-actions" aria-label="Usuario">
-          <span class="user-name">{{ user()?.name || user()?.email }}</span>
-          <button type="button" aria-label="Cerrar sesion" (click)="logout()">Salir</button>
+          <span class="user-name">{{ vm.user()?.name || vm.user()?.email }}</span>
+          <button type="button" aria-label="Cerrar sesion" (click)="vm.logout()">Salir</button>
         </div>
       </header>
 
       <main class="content">
-        @if (errorMessage()) {
-          <p class="inline-error">{{ errorMessage() }}</p>
+        @if (vm.errorMessage()) {
+          <p class="inline-error">{{ vm.errorMessage() }}</p>
         }
 
-        @if (workspaceView() === 'settings') {
-          <section class="settings-page" aria-label="Perfil y configuracion">
-            <header class="settings-header">
-              <nav class="breadcrumbs" aria-label="Ruta">
-                <span><i class="pi pi-home" aria-hidden="true"></i></span>
-                <span><i class="pi pi-angle-right" aria-hidden="true"></i></span>
-                <strong>Perfil</strong>
-              </nav>
-
-              <div class="profile-tabs" aria-label="Secciones de perfil">
-                <button class="active" type="button">Configuracion</button>
-              </div>
-            </header>
-
-            <div class="settings-grid">
-              <form class="settings-card profile-card" (ngSubmit)="saveProfile()">
-                <h3><span><i class="pi pi-user-edit" aria-hidden="true"></i></span> Mi usuario</h3>
-                <label class="settings-field stacked">
-                  <span>Nombre</span>
-                  <input
-                    name="profileName"
-                    type="text"
-                    autocomplete="name"
-                    placeholder="Tu nombre"
-                    [ngModel]="profileName()"
-                    (ngModelChange)="updateProfileName($event)"
-                    required
-                  />
-                </label>
-                <label class="settings-field stacked">
-                  <span>Correo</span>
-                  <input
-                    name="profileEmail"
-                    type="email"
-                    autocomplete="email"
-                    placeholder="correo@montao.com"
-                    [ngModel]="profileEmail()"
-                    (ngModelChange)="updateProfileEmail($event)"
-                    required
-                  />
-                </label>
-                <label class="settings-field stacked">
-                  <span>Nueva contraseña</span>
-                  <input
-                    name="profilePassword"
-                    type="password"
-                    autocomplete="new-password"
-                    placeholder="Dejala vacia para no cambiarla"
-                    [ngModel]="profilePassword()"
-                    (ngModelChange)="updateProfilePassword($event)"
-                  />
-                </label>
-                <label class="settings-field stacked">
-                  <span>Confirmar contraseña</span>
-                  <input
-                    name="profilePasswordConfirm"
-                    type="password"
-                    autocomplete="new-password"
-                    placeholder="Confirma la nueva contraseña"
-                    [ngModel]="profilePasswordConfirm()"
-                    (ngModelChange)="updateProfilePasswordConfirm($event)"
-                  />
-                </label>
-                @if (profileMessage()) {
-                  <p class="profile-message">{{ profileMessage() }}</p>
-                }
-                <button class="save-settings" type="submit" [disabled]="isSavingProfile()">
-                  {{ isSavingProfile() ? 'Guardando...' : 'Guardar usuario' }}
-                </button>
-              </form>
-
-              <section class="settings-card settings-card-tall">
-                <h3><span><i class="pi pi-palette" aria-hidden="true"></i></span> Tema de la Aplicacion</h3>
-                <label class="settings-field">
-                  <select
-                    aria-label="Tema"
-                    [ngModel]="themeMode()"
-                    (ngModelChange)="setThemeMode($event)"
-                  >
-                    <option value="dark">Oscuro</option>
-                    <option value="light">Claro</option>
-                  </select>
-                </label>
-
-                <div class="theme-options" aria-label="Opciones de tema">
-                  <button
-                    class="theme-preview light"
-                    type="button"
-                    [class.active]="themeMode() === 'light'"
-                    (click)="setThemeMode('light')"
-                  >
-                    <span></span>
-                    <strong>Claro</strong>
-                  </button>
-                  <button
-                    class="theme-preview dark"
-                    type="button"
-                    [class.active]="themeMode() === 'dark'"
-                    (click)="setThemeMode('dark')"
-                  >
-                    <span></span>
-                    <strong>Oscuro</strong>
-                  </button>
-                </div>
-
-                <p>Personaliza la apariencia de la aplicacion</p>
-              </section>
-            </div>
-          </section>
-        } @else if (appNodes().length) {
-          <section class="dashboard-view-shell" aria-label="Dashboard de sistemas">
-            <div class="view-switcher" aria-label="Tipo de visualizacion">
-              <button
-                type="button"
-                [class.active]="dashboardViewMode() === 'network'"
-                (click)="dashboardViewMode.set('network')">
-                Red
-              </button>
-              <button
-                type="button"
-                [class.active]="dashboardViewMode() === 'grid'"
-                (click)="dashboardViewMode.set('grid')">
-                Cuadricula
-              </button>
-            </div>
-
-            @if (dashboardViewMode() === 'network') {
-              <section class="network-dashboard" aria-label="Mapa de aplicaciones">
-                <div class="network-core" aria-hidden="true">
-                  <span class="core-ring"></span>
-                  <span class="core-pulse"></span>
-                  <img src="/logo.png" alt="" />
-                </div>
-
-                <svg class="network-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                  @for (link of appNodeLinks(); track link.id) {
-                    <line
-                      [class.gps-verified]="link.isMontaoGpsConnection && montaoGpsUserExists()"
-                      [class.rent-verified]="link.isMontaoRentConnection && montaoRentUserExists()"
-                      [class.crm-verified]="link.isMontaoCrmConnection && montaoCrmUserExists()"
-                      [class.gps-rent-verified]="link.isMontaoGpsRentConnection && montaoGpsUserExists() && montaoRentUserExists()"
-                      [class.crm-rent-verified]="link.isMontaoCrmRentConnection && montaoCrmUserExists() && montaoRentUserExists()"
-                      [style.stroke]="isVerifiedLink(link) ? 'rgba(34, 197, 94, 0.95)' : null"
-                      [style.stroke-width]="isVerifiedLink(link) ? 0.46 : null"
-                      [attr.x1]="link.x1"
-                      [attr.y1]="link.y1"
-                      [attr.x2]="link.x2"
-                      [attr.y2]="link.y2"
-                    />
-                  }
-                </svg>
-
-                @for (app of appNodes(); track app.name) {
-                  <a
-                    class="network-node"
-                    [class.node-connected]="isConnectedApp(app)"
-                    [class.node-disconnected]="!isConnectedApp(app)"
-                    [attr.data-node]="app.index % 9"
-                    [href]="app.url"
-                    [attr.aria-label]="displayAppName(app)"
-                    [attr.title]="displayAppName(app)"
-                    target="_blank"
-                    rel="noopener"
-                    (click)="openApp(app, $event)"
-                  >
-                    <span class="node-orbit" aria-hidden="true"></span>
-                    <span class="node-icon" aria-hidden="true">
-                      @if (appLogoUrl(app)) {
-                        <img [src]="appLogoUrl(app)" alt="" />
-                      } @else {
-                        {{ app.icon }}
-                      }
-                    </span>
-                    <span class="node-copy">
-                      <strong>{{ displayAppName(app) }}</strong>
-                      @if (isConnectedApp(app)) {
-                        <em>Conectado</em>
-                      }
-                      <small>
-                        @if (ssoLoadingApp() === displayAppName(app)) {
-                          Entrando con SSO...
-                        } @else {
-                          {{ app.description }}
-                        }
-                      </small>
-                    </span>
-                  </a>
-                }
-              </section>
-            } @else {
-              <section class="systems-grid" aria-label="Grid de sistemas">
-                @for (app of apps(); track app.name) {
-                  <a
-                    class="system-tile"
-                    [class.tile-connected]="isConnectedApp(app)"
-                    [class.tile-disconnected]="!isConnectedApp(app)"
-                    [href]="app.url"
-                    target="_blank"
-                    rel="noopener"
-                    (click)="openApp(app, $event)">
-                    <span class="tile-logo" aria-hidden="true">
-                      @if (appLogoUrl(app)) {
-                        <img [src]="appLogoUrl(app)" alt="" />
-                      } @else {
-                        {{ app.icon }}
-                      }
-                    </span>
-                    <span class="tile-copy">
-                      <strong>{{ displayAppName(app) }}</strong>
-                      @if (isConnectedApp(app)) {
-                        <em>Conectado</em>
-                      }
-                      <small>
-                        @if (ssoLoadingApp() === displayAppName(app)) {
-                          Entrando con SSO...
-                        } @else {
-                          {{ app.description }}
-                        }
-                      </small>
-                    </span>
-                  </a>
-                }
-              </section>
-            }
-          </section>
-        } @else {
-          <section class="empty-state">
-            <h2>Sin aplicaciones</h2>
-            <p>No hay aplicaciones registradas.</p>
-          </section>
-        }
+        <router-outlet />
       </main>
     </div>
   </div>
