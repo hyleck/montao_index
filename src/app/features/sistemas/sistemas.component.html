@@ -28,7 +28,7 @@
   <line
     [class.gps-verified]="link.isMontaoGpsConnection && vm.montaoGpsUserExists()"
     [class.rent-verified]="link.isMontaoRentConnection && vm.montaoRentUserExists()"
-    [class.crm-verified]="link.isMontaoCrmConnection && vm.montaoCrmUserExists()"
+    [class.crm-verified]="(link.isMontaoCrmConnection && vm.montaoCrmUserExists()) || (link.isMontaoAdminConnection && vm.montaoAdminUserExists())"
     [class.gps-rent-verified]="link.isMontaoGpsRentConnection && vm.montaoGpsUserExists() && vm.montaoRentUserExists()"
     [class.crm-rent-verified]="link.isMontaoCrmRentConnection && vm.montaoCrmUserExists() && vm.montaoRentUserExists()"
     [attr.x1]="link.x1"
@@ -118,4 +118,3 @@
   <p>No hay aplicaciones registradas.</p>
 </section>
 }
-

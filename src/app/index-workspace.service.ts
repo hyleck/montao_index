@@ -29,6 +29,7 @@ interface AppNodeLink {
   isMontaoGpsConnection: boolean;
   isMontaoRentConnection: boolean;
   isMontaoCrmConnection: boolean;
+  isMontaoAdminConnection: boolean;
   isMontaoGpsRentConnection: boolean;
   isMontaoCrmRentConnection: boolean;
 }
@@ -210,6 +211,7 @@ export class IndexWorkspaceService {
   readonly montaoGpsUserExists = signal(false);
   readonly montaoRentUserExists = signal(false);
   readonly montaoCrmUserExists = signal(false);
+  readonly montaoAdminUserExists = signal(false);
   private usernameAvailabilityTimer: ReturnType<typeof setTimeout> | null = null;
   private usernameAvailabilityRequestId = 0;
   readonly mailFolders: MailFolderItem[] = [
@@ -328,6 +330,7 @@ export class IndexWorkspaceService {
         isMontaoGpsConnection: this.isMontaoGpsApp(node),
         isMontaoRentConnection: this.isMontaoRentApp(node),
         isMontaoCrmConnection: this.isMontaoCrmApp(node),
+        isMontaoAdminConnection: this.isMontaoMarketplaceApp(node),
         isMontaoGpsRentConnection: false,
         isMontaoCrmRentConnection: false,
       });
@@ -1378,6 +1381,7 @@ export class IndexWorkspaceService {
     this.montaoGpsUserExists.set(false);
     this.montaoRentUserExists.set(false);
     this.montaoCrmUserExists.set(false);
+    this.montaoAdminUserExists.set(false);
     this.password.set('');
     this.profileName.set('');
     this.profileEmail.set('');
@@ -1401,6 +1405,10 @@ export class IndexWorkspaceService {
     return app.name.toLowerCase().includes('crm');
   }
 
+   isMontaoMarketplaceApp(app: CompanyApp): boolean {
+    return app.name.toLowerCase().includes('marketplace');
+  }
+
    isMontaoTalleresApp(app: CompanyApp): boolean {
     return app.name.toLowerCase().includes('taller');
   }
@@ -1414,6 +1422,7 @@ export class IndexWorkspaceService {
       (link.isMontaoGpsConnection && this.montaoGpsUserExists()) ||
       (link.isMontaoRentConnection && this.montaoRentUserExists()) ||
       (link.isMontaoCrmConnection && this.montaoCrmUserExists()) ||
+      (link.isMontaoAdminConnection && this.montaoAdminUserExists()) ||
       (link.isMontaoGpsRentConnection && this.montaoGpsUserExists() && this.montaoRentUserExists()) ||
       (link.isMontaoCrmRentConnection && this.montaoCrmUserExists() && this.montaoRentUserExists())
     );
@@ -1430,6 +1439,10 @@ export class IndexWorkspaceService {
 
     if (this.isMontaoCrmApp(app)) {
       return this.montaoCrmUserExists();
+    }
+
+    if (this.isMontaoMarketplaceApp(app)) {
+      return this.montaoAdminUserExists();
     }
 
     return false;
@@ -1518,7 +1531,12 @@ export class IndexWorkspaceService {
   }
 
   private isSsoApp(app: CompanyApp): boolean {
-    return this.isMontaoGpsApp(app) || this.isMontaoRentApp(app) || this.isMontaoCrmApp(app);
+    return (
+      this.isMontaoGpsApp(app) ||
+      this.isMontaoRentApp(app) ||
+      this.isMontaoCrmApp(app) ||
+      this.isMontaoMarketplaceApp(app)
+    );
   }
 
   private ssoPathForApp(app: CompanyApp): string {
@@ -1528,6 +1546,10 @@ export class IndexWorkspaceService {
 
     if (this.isMontaoCrmApp(app)) {
       return 'montao-crm';
+    }
+
+    if (this.isMontaoMarketplaceApp(app)) {
+      return 'montao-admin';
     }
 
     return 'montao-gps';
@@ -1836,6 +1858,7 @@ export class IndexWorkspaceService {
       isMontaoGpsConnection: false,
       isMontaoRentConnection: false,
       isMontaoCrmConnection: false,
+      isMontaoAdminConnection: false,
       isMontaoGpsRentConnection: this.isGpsRentNodePair(from, to),
       isMontaoCrmRentConnection: this.isCrmRentNodePair(from, to),
     };
@@ -1864,6 +1887,7 @@ export class IndexWorkspaceService {
       this.loadMontaoGpsUserStatus(),
       this.loadMontaoRentUserStatus(),
       this.loadMontaoCrmUserStatus(),
+      this.loadMontaoAdminUserStatus(),
     ]);
   }
 
@@ -1936,6 +1960,30 @@ export class IndexWorkspaceService {
       this.montaoCrmUserExists.set(payload.exists === true);
     } catch {
       this.montaoCrmUserExists.set(false);
+    }
+  }
+
+  private async loadMontaoAdminUserStatus(): Promise<void> {
+    const token = this.authToken();
+    if (!token) {
+      this.montaoAdminUserExists.set(false);
+      return;
+    }
+
+    try {
+      const response = await fetch(`${this.apiUrl}/sso/montao-admin/user-exists`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!response.ok) {
+        this.montaoAdminUserExists.set(false);
+        return;
+      }
+
+      const payload = (await response.json()) as { exists?: boolean };
+      this.montaoAdminUserExists.set(payload.exists === true);
+    } catch {
+      this.montaoAdminUserExists.set(false);
     }
   }
 }
