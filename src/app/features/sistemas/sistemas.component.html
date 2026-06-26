@@ -45,11 +45,13 @@
   [class.node-connected]="vm.isConnectedApp(app)"
   [class.node-disconnected]="!vm.isConnectedApp(app)"
   [attr.data-node]="app.index % 10"
-  [href]="app.url"
+  [attr.href]="vm.isConnectedApp(app) ? app.url : null"
+  [attr.aria-disabled]="!vm.isConnectedApp(app)"
+  [attr.tabindex]="vm.isConnectedApp(app) ? null : -1"
   [attr.aria-label]="vm.displayAppName(app)"
   [attr.title]="vm.displayAppName(app)"
-  target="_blank"
-  rel="noopener"
+  [attr.target]="vm.isConnectedApp(app) ? '_blank' : null"
+  [attr.rel]="vm.isConnectedApp(app) ? 'noopener' : null"
   (click)="vm.openApp(app, $event)"
 >
   <span class="node-orbit" aria-hidden="true"></span>
@@ -83,9 +85,11 @@
   class="system-tile"
   [class.tile-connected]="vm.isConnectedApp(app)"
   [class.tile-disconnected]="!vm.isConnectedApp(app)"
-  [href]="app.url"
-  target="_blank"
-  rel="noopener"
+  [attr.href]="vm.isConnectedApp(app) ? app.url : null"
+  [attr.aria-disabled]="!vm.isConnectedApp(app)"
+  [attr.tabindex]="vm.isConnectedApp(app) ? null : -1"
+  [attr.target]="vm.isConnectedApp(app) ? '_blank' : null"
+  [attr.rel]="vm.isConnectedApp(app) ? 'noopener' : null"
   (click)="vm.openApp(app, $event)">
   <span class="tile-logo" aria-hidden="true">
     @if (vm.appLogoUrl(app)) {

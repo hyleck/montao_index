@@ -1499,6 +1499,11 @@ export class IndexWorkspaceService {
   }
 
   async openApp(app: CompanyApp, event: Event): Promise<void> {
+    if (!this.isConnectedApp(app)) {
+      event.preventDefault();
+      return;
+    }
+
     if (!this.isSsoApp(app)) {
       return;
     }
